@@ -85,7 +85,8 @@ class Deck(BaseModel):
     name: str
     output: Output = Field(default_factory=Output)
     background: str = config.DEFAULT_BACKGROUND
-    mirror: bool = False                          # horizontally flip the output
+    mirror: bool = False                          # horizontally flip the photo
+    mirrorHud: bool = False                       # horizontally flip the HUD overlay (independently)
     thermal: Thermal = Field(default_factory=Thermal)
     defaults: Defaults = Field(default_factory=Defaults)
     slides: list[Slide] = Field(default_factory=list)

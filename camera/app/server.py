@@ -237,6 +237,10 @@ async def api_present_action(action: str, body: Optional[JumpReq] = None):
         presentation.set_mirror(not presentation.mirror)
         if presentation.deck is not None:
             deck_mod.save_deck(presentation.deck)
+    elif action == "mirrorhud":
+        presentation.set_mirror_hud(not presentation.mirror_hud)
+        if presentation.deck is not None:
+            deck_mod.save_deck(presentation.deck)
     elif action == "jump":
         if body is None:
             raise HTTPException(400, "jump requires {index}")

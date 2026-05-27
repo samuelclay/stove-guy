@@ -31,6 +31,7 @@ class Presentation:
         self.status = NO_DECK
         self.remaining: float | None = None
         self.mirror = False
+        self.mirror_hud = False
         self.temp = TemperatureModel()
         self._lock = threading.Lock()
 
@@ -84,6 +85,7 @@ class Presentation:
             self.index = 0
             self.remaining = None
             self.mirror = bool(deck.mirror)
+            self.mirror_hud = bool(deck.mirrorHud)
             self.engine.set_mirror(self.mirror)
             self.temp.configure(deck.thermal)
             if not deck.thermal.enabled:
@@ -185,6 +187,12 @@ class Presentation:
                 # re-render the live image for an instant cut with the new final transform
                 self.engine.set_target(self._frame_for(slide), 0)
 
+    def set_mirror_hud(self, value: bool) -> None:
+        with self._lock:
+            self.mirror_hud = bool(value)
+            if self.deck is not None:
+                self.deck.mirrorHud = self.mirror_hud
+
     def update_timing(self, slide_id: str, duration=None, mode=None, temperature=None) -> bool:
         """Change a slide's duration/mode/temperature in place, WITHOUT resetting
         position. If the edited slide is live, its countdown and temperature ramp
@@ -222,7 +230,7 @@ class Presentation:
             snap = self.temp.snapshot()
         # render the thermal HUD outside the lock (PIL work), then composite
         if snap is not None:
-            rgba, x, y = hud.render(snap, self.engine.width, self.engine.height)
+            rgba, x, y = hud.render(snap, self.engine.width, self.engine.height, self.mirror_hud)
             self.engine.set_overlay(rgba, x, y)
         if advance_now:
             self.next()   # next() takes the lock itself
@@ -251,6 +259,7 @@ class Presentation:
                 "remaining": round(self.remaining, 2) if self.remaining is not None else None,
                 "duration": duration,
                 "mirror": self.mirror,
+                "mirrorHud": self.mirror_hud,
                 "temp": round(self.temp.display) if (self.temp.enabled and self.temp.display is not None) else None,
                 "tempZone": self.temp.zone() if self.temp.enabled else None,
                 "tempTarget": round(slide.temperature) if (slide and slide.temperature is not None) else None,

@@ -174,6 +174,7 @@ async function openEditor(deckId) {
   $("#defFade").value = deck.defaults.transition.durationMs;
   $("#bgColor").value = deck.background || "#000000";
   $("#mirrorChk").checked = !!deck.mirror;
+  $("#mirrorHudChk").checked = !!deck.mirrorHud;
   deck.thermal = deck.thermal || { enabled: false, unit: "F" };
   const th = deck.thermal;
   $("#thermalOn").checked = !!th.enabled;
@@ -215,6 +216,7 @@ $("#defFit").onchange = (e) => { deck.defaults.fit = e.target.value; scheduleSav
 $("#defFade").onchange = (e) => { deck.defaults.transition.durationMs = parseInt(e.target.value) || 0; scheduleSave(); };
 $("#bgColor").onchange = (e) => { deck.background = e.target.value; scheduleSave(); };
 $("#mirrorChk").onchange = (e) => { deck.mirror = e.target.checked; scheduleSave(); };
+$("#mirrorHudChk").onchange = (e) => { deck.mirrorHud = e.target.checked; scheduleSave(); };
 const _thNum = (v) => (v === "" ? null : parseFloat(v));
 $("#thermalOn").onchange = (e) => { deck.thermal.enabled = e.target.checked; scheduleSave(); };
 $("#thColdT").onchange = (e) => { deck.thermal.coldThreshold = _thNum(e.target.value); scheduleSave(); };
@@ -494,6 +496,7 @@ $$("#view-presenter .transport [data-act]").forEach((b) => {
   b.onclick = () => present(b.dataset.act);
 });
 $("#mirrorBtn").onclick = () => present("mirror");
+$("#mirrorHudBtn").onclick = () => present("mirrorhud");
 
 function updatePresenter(p) {
   if (!p || p.deckId !== (presentDeck && presentDeck.id)) return;
@@ -514,6 +517,7 @@ function updatePresenter(p) {
 
   // mirror toggle reflects current state
   $("#mirrorBtn").classList.toggle("on", !!p.mirror);
+  $("#mirrorHudBtn").classList.toggle("on", !!p.mirrorHud);
 
   // counter
   $("#counter").textContent = `${p.slideCount ? p.index + 1 : 0} / ${p.slideCount}`;

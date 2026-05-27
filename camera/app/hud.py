@@ -13,10 +13,11 @@ from PIL import Image, ImageDraw, ImageFont
 PANEL_W, PANEL_H = 660, 430
 MARGIN = 36
 PAD = 26
-# Consumers like Photo Booth / Zoom show a ~4:3 view of the 16:9 camera and crop
-# the sides, so a panel flush to the right edge gets clipped. Anchor it inside
-# the crop-safe centre band of this aspect (lower = safer/more central).
-SAFE_ASPECT = 4 / 3
+# Consumers like Photo Booth / Zoom show a narrower view of the 16:9 camera and
+# crop the sides, so a panel flush to the right edge gets clipped. Anchor it
+# inside the crop-safe centre band of this aspect (lower = safer/more central,
+# higher = closer to the corner). 3:2 keeps it near the corner but inside most crops.
+SAFE_ASPECT = 3 / 2
 
 COL_BG = (12, 14, 18, 168)
 COL_BORDER = (255, 255, 255, 28)
@@ -65,8 +66,12 @@ def _dashed_h(d: ImageDraw.ImageDraw, x0: int, x1: int, y: int, color, dash=12, 
         x += dash + gap
 
 
-def render(snap: dict, frame_w: int = 1920, frame_h: int = 1080):
-    """snap is TemperatureModel.snapshot(); returns (rgba, x, y)."""
+def render(snap: dict, frame_w: int = 1920, frame_h: int = 1080, mirror: bool = False):
+    """snap is TemperatureModel.snapshot(); returns (rgba, x, y).
+
+    If ``mirror`` is set, the HUD is reflected horizontally (content flipped and
+    moved to the opposite side) so it reads correctly in a consumer that mirrors
+    the whole frame (e.g. Photo Booth)."""
     img = Image.new("RGBA", (PANEL_W, PANEL_H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rounded_rectangle([0, 0, PANEL_W - 1, PANEL_H - 1], radius=22, fill=COL_BG, outline=COL_BORDER, width=1)
@@ -145,4 +150,7 @@ def render(snap: dict, frame_w: int = 1920, frame_h: int = 1080):
     safe_right = (frame_w + frame_h * SAFE_ASPECT) / 2.0
     x = int(max(MARGIN, min(frame_w - PANEL_W - MARGIN, safe_right - PANEL_W - MARGIN)))
     y = MARGIN
+    if mirror:
+        rgba = np.ascontiguousarray(rgba[:, ::-1])
+        x = frame_w - x - PANEL_W
     return rgba, x, y
