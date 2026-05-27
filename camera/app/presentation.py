@@ -10,8 +10,10 @@ import threading
 
 from . import deck as deck_mod
 from . import frames
+from . import hud
 from .camera_engine import CameraEngine
 from .deck import Deck, Slide
+from .temperature import TemperatureModel
 
 # status values
 NO_DECK = "no_deck"
@@ -29,6 +31,7 @@ class Presentation:
         self.status = NO_DECK
         self.remaining: float | None = None
         self.mirror = False
+        self.temp = TemperatureModel()
         self._lock = threading.Lock()
 
     # ---------------------------------------------------------------- helpers
@@ -61,6 +64,14 @@ class Presentation:
             return
         fade = self._fade_ms(slide) if use_transition else 0
         self.engine.set_target(self._frame_for(slide), fade)
+        self._begin_temp_segment()
+
+    def _begin_temp_segment(self) -> None:
+        slide = self.current
+        if slide is None:
+            return
+        dur = self.deck.eff_duration(slide) if slide.mode == "auto" else None
+        self.temp.begin_segment(slide.temperature, dur)
 
     def _arm_timer(self) -> None:
         slide = self.current
@@ -76,11 +87,16 @@ class Presentation:
             self.index = 0
             self.remaining = None
             self.mirror = bool(deck.mirror)
+            self.temp.configure(deck.thermal)
+            if not deck.thermal.enabled:
+                self.engine.set_overlay(None)
             if not self._slides:
                 self.status = STANDBY
+                self.temp.reset(None)
                 self.engine.set_target(frames.solid_frame(deck.background), 0)
             else:
                 self.status = STANDBY
+                self.temp.reset(self._slides[0].temperature)
                 self._show(0, use_transition=False)   # standby = first image (cut)
 
     def start(self) -> None:
@@ -155,6 +171,7 @@ class Presentation:
             self.remaining = None
             self.status = STANDBY
             if self._slides:
+                self.temp.reset(self._slides[0].temperature)
                 self._show(0, use_transition=False)
             else:
                 self.engine.set_target(frames.solid_frame(self.deck.background), 0)
@@ -169,11 +186,10 @@ class Presentation:
                 # re-render the live image with the new flip (instant cut)
                 self.engine.set_target(self._frame_for(slide), 0)
 
-    def update_timing(self, slide_id: str, duration=None, mode=None) -> bool:
-        """Change a slide's duration/mode in place, WITHOUT resetting position.
-
-        If the edited slide is the one currently live, its countdown is
-        re-armed so the change takes effect immediately.
+    def update_timing(self, slide_id: str, duration=None, mode=None, temperature=None) -> bool:
+        """Change a slide's duration/mode/temperature in place, WITHOUT resetting
+        position. If the edited slide is live, its countdown and temperature ramp
+        are re-armed so the change takes effect immediately.
         """
         with self._lock:
             if not self.deck:
@@ -185,23 +201,30 @@ class Presentation:
                 slide.mode = mode
             if duration is not None:
                 slide.durationSec = float(duration)
+            if temperature is not None:
+                slide.temperature = float(temperature)
             if slide is self.current and self.status in (PLAYING, PAUSED, STANDBY):
                 self.remaining = self.deck.eff_duration(slide) if slide.mode == "auto" else None
+                if temperature is not None:
+                    self.temp.begin_segment(slide.temperature, self.remaining)
             return True
 
     def tick(self, dt: float) -> None:
-        """Advance the countdown; called ~10x/sec by the server's ticker."""
+        """Advance the countdown + temperature; called ~10x/sec by the ticker."""
+        advance_now = False
         with self._lock:
-            if self.status != PLAYING:
-                return
-            slide = self.current
-            if slide is None or slide.mode != "auto" or self.remaining is None:
-                return
-            self.remaining -= dt
-            if self.remaining <= 0:
-                advance_now = True
-            else:
-                advance_now = False
+            advancing = self.status == PLAYING
+            self.temp.update(dt, advancing)
+            if advancing:
+                slide = self.current
+                if slide is not None and slide.mode == "auto" and self.remaining is not None:
+                    self.remaining -= dt
+                    advance_now = self.remaining <= 0
+            snap = self.temp.snapshot()
+        # render the thermal HUD outside the lock (PIL work), then composite
+        if snap is not None:
+            rgba, x, y = hud.render(snap, self.engine.width, self.engine.height)
+            self.engine.set_overlay(rgba, x, y)
         if advance_now:
             self.next()   # next() takes the lock itself
 
@@ -229,4 +252,7 @@ class Presentation:
                 "remaining": round(self.remaining, 2) if self.remaining is not None else None,
                 "duration": duration,
                 "mirror": self.mirror,
+                "temp": round(self.temp.display, 1) if (self.temp.enabled and self.temp.display is not None) else None,
+                "tempZone": self.temp.zone() if self.temp.enabled else None,
+                "tempTarget": slide.temperature if slide else None,
             }

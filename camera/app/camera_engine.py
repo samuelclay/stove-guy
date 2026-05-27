@@ -36,6 +36,7 @@ class CameraEngine:
         self._target = self._displayed                        # crossfade end
         self._fade_start = 0.0
         self._fade_dur = 0.0                                  # seconds; 0 == no fade
+        self._overlay = None                                  # (rgba_tile, x, y) | None
 
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -75,6 +76,10 @@ class CameraEngine:
                 self._fade_start = time.monotonic()
                 self._fade_dur = fade_ms / 1000.0
 
+    def set_overlay(self, rgba: np.ndarray | None, x: int = 0, y: int = 0) -> None:
+        """Set (or clear) an RGBA HUD tile alpha-blended onto every frame."""
+        self._overlay = None if rgba is None else (rgba, int(x), int(y))
+
     @property
     def preview_jpeg(self) -> bytes:
         return self._preview_jpeg
@@ -96,6 +101,18 @@ class CameraEngine:
         buf = io.BytesIO()
         img.save(buf, "JPEG", quality=config.PREVIEW_JPEG_QUALITY)
         return buf.getvalue()
+
+    def _composite_overlay(self, frame: np.ndarray, overlay) -> np.ndarray:
+        rgba, x, y = overlay
+        th, tw = rgba.shape[:2]
+        fh, fw = frame.shape[:2]
+        if x < 0 or y < 0 or x + tw > fw or y + th > fh:
+            return frame
+        out = frame.copy()
+        region = out[y:y + th, x:x + tw].astype(np.float32)
+        a = rgba[:, :, 3:4].astype(np.float32) / 255.0
+        out[y:y + th, x:x + tw] = (region * (1.0 - a) + rgba[:, :, :3].astype(np.float32) * a).astype(np.uint8)
+        return out
 
     def _compute_displayed(self) -> np.ndarray:
         with self._lock:
@@ -139,6 +156,9 @@ class CameraEngine:
         try:
             while not self._stop.is_set():
                 frame = self._compute_displayed()
+                ov = self._overlay
+                if ov is not None:
+                    frame = self._composite_overlay(frame, ov)
 
                 # update preview every Nth frame to limit CPU
                 self._preview_counter += 1

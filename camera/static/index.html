@@ -58,6 +58,24 @@
           </label>
           <label class="check-row"><input type="checkbox" id="mirrorChk" /> Mirror output (flip horizontally)</label>
 
+          <h3>Thermal — IR thermometer</h3>
+          <label class="check-row"><input type="checkbox" id="thermalOn" /> Show temperature HUD</label>
+          <label>Cold threshold (°)
+            <input type="number" id="thColdT" step="5" />
+          </label>
+          <label>Burn threshold (°)
+            <input type="number" id="thBurnT" step="5" />
+          </label>
+          <label>Cold-zone label
+            <input type="text" id="thColdL" />
+          </label>
+          <label>Burn-zone label
+            <input type="text" id="thBurnL" />
+          </label>
+          <label>Sparkline min / max (°)
+            <div class="row"><input type="number" id="thMin" step="10" placeholder="min" /><input type="number" id="thMax" step="10" placeholder="max" /></div>
+          </label>
+
           <h3>Add images</h3>
           <div id="dropZone" class="dropzone">
             <p>Drop images here<br /><small>PNG · JPG · WebP · HEIC</small></p>

@@ -93,6 +93,7 @@ class TimingReq(BaseModel):
     slideId: str
     durationSec: Optional[float] = None
     mode: Optional[Literal["auto", "manual"]] = None
+    temperature: Optional[float] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -206,7 +207,7 @@ async def api_present_timing(req: TimingReq):
     """Live-edit a slide's duration/mode and persist to the deck JSON,
     without resetting the presentation position."""
     _require_deck()
-    if not presentation.update_timing(req.slideId, req.durationSec, req.mode):
+    if not presentation.update_timing(req.slideId, req.durationSec, req.mode, req.temperature):
         raise HTTPException(404, "slide not found")
     deck_mod.save_deck(presentation.deck)
     await broadcast()

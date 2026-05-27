@@ -57,12 +57,25 @@ class Slide(BaseModel):
     durationSec: Optional[float] = None          # used when mode == auto
     fit: Optional[Literal["cover", "contain"]] = None
     transition: Optional[Transition] = None
+    temperature: Optional[float] = None          # IR-thermometer target temp for this frame
 
 
 class Defaults(BaseModel):
     durationSec: float = config.DEFAULT_DURATION_SEC
     fit: Literal["cover", "contain"] = config.DEFAULT_FIT
     transition: Transition = Field(default_factory=Transition)
+
+
+class Thermal(BaseModel):
+    """IR-thermometer HUD config for a recipe."""
+    enabled: bool = False
+    unit: str = "F"
+    coldThreshold: Optional[float] = None         # below = "too cold / not ready"
+    burnThreshold: Optional[float] = None         # above = "burning"
+    coldLabel: str = "Too cold"
+    burnLabel: str = "Burning above this"
+    minTemp: Optional[float] = None               # sparkline y-axis range (auto if None)
+    maxTemp: Optional[float] = None
 
 
 class Deck(BaseModel):
@@ -72,6 +85,7 @@ class Deck(BaseModel):
     output: Output = Field(default_factory=Output)
     background: str = config.DEFAULT_BACKGROUND
     mirror: bool = False                          # horizontally flip the output
+    thermal: Thermal = Field(default_factory=Thermal)
     defaults: Defaults = Field(default_factory=Defaults)
     slides: list[Slide] = Field(default_factory=list)
 

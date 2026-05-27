@@ -174,6 +174,15 @@ async function openEditor(deckId) {
   $("#defFade").value = deck.defaults.transition.durationMs;
   $("#bgColor").value = deck.background || "#000000";
   $("#mirrorChk").checked = !!deck.mirror;
+  deck.thermal = deck.thermal || { enabled: false, unit: "F" };
+  const th = deck.thermal;
+  $("#thermalOn").checked = !!th.enabled;
+  $("#thColdT").value = th.coldThreshold ?? "";
+  $("#thBurnT").value = th.burnThreshold ?? "";
+  $("#thColdL").value = th.coldLabel ?? "";
+  $("#thBurnL").value = th.burnLabel ?? "";
+  $("#thMin").value = th.minTemp ?? "";
+  $("#thMax").value = th.maxTemp ?? "";
   renderSlides();
 }
 
@@ -206,6 +215,14 @@ $("#defFit").onchange = (e) => { deck.defaults.fit = e.target.value; scheduleSav
 $("#defFade").onchange = (e) => { deck.defaults.transition.durationMs = parseInt(e.target.value) || 0; scheduleSave(); };
 $("#bgColor").onchange = (e) => { deck.background = e.target.value; scheduleSave(); };
 $("#mirrorChk").onchange = (e) => { deck.mirror = e.target.checked; scheduleSave(); };
+const _thNum = (v) => (v === "" ? null : parseFloat(v));
+$("#thermalOn").onchange = (e) => { deck.thermal.enabled = e.target.checked; scheduleSave(); };
+$("#thColdT").onchange = (e) => { deck.thermal.coldThreshold = _thNum(e.target.value); scheduleSave(); };
+$("#thBurnT").onchange = (e) => { deck.thermal.burnThreshold = _thNum(e.target.value); scheduleSave(); };
+$("#thColdL").oninput = (e) => { deck.thermal.coldLabel = e.target.value; scheduleSave(); };
+$("#thBurnL").oninput = (e) => { deck.thermal.burnLabel = e.target.value; scheduleSave(); };
+$("#thMin").onchange = (e) => { deck.thermal.minTemp = _thNum(e.target.value); scheduleSave(); };
+$("#thMax").onchange = (e) => { deck.thermal.maxTemp = _thNum(e.target.value); scheduleSave(); };
 $("#presentBtn").onclick = async () => { await saveNow(); openPresenter(deck.id); };
 
 function renderSlides() {
@@ -247,10 +264,13 @@ function renderSlides() {
           <option value="crossfade">crossfade</option>
         </select>
         <input type="number" class="trans-ms hidden" min="0" step="50" title="crossfade ms" />
+        <input type="number" class="slide-temp" step="5" placeholder="temp°" title="target temperature" />
         <button class="del-slide" title="Remove">🗑</button>
       </div>`;
 
     $(".fit", row).value = s.fit || "";
+    $(".slide-temp", row).value = s.temperature ?? "";
+    $(".slide-temp", row).onchange = (e) => { s.temperature = e.target.value === "" ? null : parseFloat(e.target.value); scheduleSave(); };
 
     // per-slide transition controls
     const transSel = $(".trans", row);
@@ -405,12 +425,33 @@ function renderFilmstrip() {
     film.innerHTML = `
       <span class="liveflag">LIVE</span>
       <img src="${thumbUrl(presentDeck.id, s.id)}" alt="" />
-      <div class="cap"><span class="n">${i + 1}</span><span class="timing"></span></div>
+      <div class="cap">
+        <div class="cap-row"><span class="n">${i + 1}</span><span class="timing"></span></div>
+        <div class="cap-row thermo"></div>
+      </div>
       <div class="progress"></div>`;
-    film.onclick = (e) => { if (!e.target.closest(".timing")) present("jump", { index: i }); };
+    film.onclick = (e) => {
+      if (!e.target.closest(".timing") && !e.target.closest(".thermo")) present("jump", { index: i });
+    };
     strip.appendChild(film);
     renderFilmTiming(film, s, i);
+    renderFilmThermo(film, s, i);
   });
+}
+
+// editable per-slide temperature in the filmstrip (live, saved to the JSON)
+function renderFilmThermo(film, s, i) {
+  const span = $(".thermo", film);
+  if (!span) return;
+  const th = presentDeck.thermal;
+  if (!th || !th.enabled) { span.style.display = "none"; return; }
+  span.style.display = "";
+  span.innerHTML =
+    `<span class="thermo-ico">◎</span>` +
+    `<input class="film-temp" type="number" step="5" value="${s.temperature ?? ""}" placeholder="—" title="target temperature" />` +
+    `<span class="su">°${th.unit || "F"}</span>`;
+  $(".film-temp", span).onchange = (e) =>
+    saveTiming(s, i, { temperature: e.target.value === "" ? null : parseFloat(e.target.value) });
 }
 
 // inline per-slide timing editing in the presenter — saved straight to the
@@ -435,9 +476,9 @@ async function saveTiming(s, i, changes) {
   if (changes.mode === "auto" && s.durationSec == null) s.durationSec = presentDeck.defaults.durationSec;
   Object.assign(s, changes);
   try {
-    await api("POST", "/api/present/timing", { slideId: s.id, durationSec: s.durationSec ?? null, mode: s.mode });
+    await api("POST", "/api/present/timing", { slideId: s.id, durationSec: s.durationSec ?? null, mode: s.mode, temperature: s.temperature ?? null });
     const film = $(`#filmstrip .film[data-idx="${i}"]`);
-    if (film) renderFilmTiming(film, s, i);
+    if (film) { renderFilmTiming(film, s, i); renderFilmThermo(film, s, i); }
   } catch (e) {
     toast("Save failed: " + e.message, true);
   }
