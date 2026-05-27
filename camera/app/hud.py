@@ -13,6 +13,10 @@ from PIL import Image, ImageDraw, ImageFont
 PANEL_W, PANEL_H = 660, 430
 MARGIN = 36
 PAD = 26
+# Consumers like Photo Booth / Zoom show a ~4:3 view of the 16:9 camera and crop
+# the sides, so a panel flush to the right edge gets clipped. Anchor it inside
+# the crop-safe centre band of this aspect (lower = safer/more central).
+SAFE_ASPECT = 4 / 3
 
 COL_BG = (12, 14, 18, 168)
 COL_BORDER = (255, 255, 255, 28)
@@ -137,6 +141,8 @@ def render(snap: dict, frame_w: int = 1920, frame_h: int = 1080):
     d.text((sx + sw + 6, sy + sh - 16), f"{round(lo)}°", font=_font(15), fill=COL_MUTED)
 
     rgba = np.asarray(img, dtype=np.uint8)
-    x = frame_w - PANEL_W - MARGIN
+    # right edge of the crop-safe centre band (full height kept, sides cropped)
+    safe_right = (frame_w + frame_h * SAFE_ASPECT) / 2.0
+    x = int(max(MARGIN, min(frame_w - PANEL_W - MARGIN, safe_right - PANEL_W - MARGIN)))
     y = MARGIN
     return rgba, x, y

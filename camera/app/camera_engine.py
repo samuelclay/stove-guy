@@ -133,11 +133,15 @@ class CameraEngine:
             return self._displayed
 
     def _finalize_frame(self, frame: np.ndarray, overlay) -> np.ndarray:
-        if overlay is not None:
-            frame = self._composite_overlay(frame, overlay)
+        # Mirror the PHOTO only, then overlay the HUD, so the HUD text stays
+        # readable (and pinned top-right) regardless of the mirror toggle.
         with self._lock:
             mirror = self._mirror
-        return frames.flip_h(frame) if mirror else frame
+        if mirror:
+            frame = frames.flip_h(frame)
+        if overlay is not None:
+            frame = self._composite_overlay(frame, overlay)
+        return frame
 
     def _open_camera(self):
         if pyvirtualcam is None:
