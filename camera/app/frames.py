@@ -99,6 +99,11 @@ def render(
     return frame
 
 
+def flip_h(frame: np.ndarray) -> np.ndarray:
+    """Mirror a frame horizontally (left-right)."""
+    return np.ascontiguousarray(frame[:, ::-1])
+
+
 def blend(a: np.ndarray, b: np.ndarray, t: float) -> np.ndarray:
     """Linear crossfade from frame ``a`` to frame ``b`` at progress ``t`` in [0,1]."""
     t = max(0.0, min(1.0, t))

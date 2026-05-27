@@ -28,6 +28,7 @@ class Presentation:
         self.index = 0
         self.status = NO_DECK
         self.remaining: float | None = None
+        self.mirror = False
         self._lock = threading.Lock()
 
     # ---------------------------------------------------------------- helpers
@@ -47,7 +48,10 @@ class Presentation:
 
     def _frame_for(self, slide: Slide):
         path = deck_mod.resolve_image(self.deck.id, slide.image)
-        return frames.render(path, fit=self.deck.eff_fit(slide), background=self.deck.background)
+        frame = frames.render(path, fit=self.deck.eff_fit(slide), background=self.deck.background)
+        if self.mirror:
+            frame = frames.flip_h(frame)
+        return frame
 
     def _show(self, index: int, use_transition: bool) -> None:
         self.index = index
@@ -71,6 +75,7 @@ class Presentation:
             self.deck = deck
             self.index = 0
             self.remaining = None
+            self.mirror = bool(deck.mirror)
             if not self._slides:
                 self.status = STANDBY
                 self.engine.set_target(frames.solid_frame(deck.background), 0)
@@ -154,6 +159,16 @@ class Presentation:
             else:
                 self.engine.set_target(frames.solid_frame(self.deck.background), 0)
 
+    def set_mirror(self, value: bool) -> None:
+        with self._lock:
+            self.mirror = bool(value)
+            if self.deck is not None:
+                self.deck.mirror = self.mirror
+            slide = self.current
+            if slide is not None:
+                # re-render the live image with the new flip (instant cut)
+                self.engine.set_target(self._frame_for(slide), 0)
+
     def tick(self, dt: float) -> None:
         """Advance the countdown; called ~10x/sec by the server's ticker."""
         with self._lock:
@@ -193,4 +208,5 @@ class Presentation:
                 "paused": self.status == PAUSED,
                 "remaining": round(self.remaining, 2) if self.remaining is not None else None,
                 "duration": duration,
+                "mirror": self.mirror,
             }

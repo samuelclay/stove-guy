@@ -135,6 +135,7 @@ async function openEditor(deckId) {
   $("#defFit").value = deck.defaults.fit;
   $("#defFade").value = deck.defaults.transition.durationMs;
   $("#bgColor").value = deck.background || "#000000";
+  $("#mirrorChk").checked = !!deck.mirror;
   renderSlides();
 }
 
@@ -166,6 +167,7 @@ $("#defDuration").onchange = (e) => { deck.defaults.durationSec = parseFloat(e.t
 $("#defFit").onchange = (e) => { deck.defaults.fit = e.target.value; scheduleSave(); };
 $("#defFade").onchange = (e) => { deck.defaults.transition.durationMs = parseInt(e.target.value) || 0; scheduleSave(); };
 $("#bgColor").onchange = (e) => { deck.background = e.target.value; scheduleSave(); };
+$("#mirrorChk").onchange = (e) => { deck.mirror = e.target.checked; scheduleSave(); };
 $("#presentBtn").onclick = async () => { await saveNow(); openPresenter(deck.id); };
 
 function renderSlides() {
@@ -334,6 +336,7 @@ async function present(action, body) {
 $$("#view-presenter .transport [data-act]").forEach((b) => {
   b.onclick = () => present(b.dataset.act);
 });
+$("#mirrorBtn").onclick = () => present("mirror");
 
 function updatePresenter(p) {
   if (!p || p.deckId !== (presentDeck && presentDeck.id)) return;
@@ -351,6 +354,9 @@ function updatePresenter(p) {
 
   // play/pause button glyph
   $("#playBtn").textContent = p.status === "playing" ? "⏸" : "▶";
+
+  // mirror toggle reflects current state
+  $("#mirrorBtn").classList.toggle("on", !!p.mirror);
 
   // counter
   $("#counter").textContent = `${p.slideCount ? p.index + 1 : 0} / ${p.slideCount}`;

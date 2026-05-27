@@ -67,6 +67,7 @@ class Deck(BaseModel):
     name: str
     output: Output = Field(default_factory=Output)
     background: str = config.DEFAULT_BACKGROUND
+    mirror: bool = False                          # horizontally flip the output
     defaults: Defaults = Field(default_factory=Defaults)
     slides: list[Slide] = Field(default_factory=list)
 
