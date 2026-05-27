@@ -1,0 +1,11 @@
+# Python
+camera/.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated thumbnails (regenerated from source images on load)
+camera/decks/*/thumbs/
+
+# macOS
+.DS_Store

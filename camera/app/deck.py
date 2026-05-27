@@ -1,0 +1,269 @@
+"""Deck model + on-disk library.
+
+Layout on disk:
+    decks/<deck-id>/
+        deck.json          # the hand-editable spec you can also feed directly
+        images/            # uploaded image files (referenced by relative path)
+        thumbs/            # generated filmstrip thumbnails, one per slide id
+"""
+from __future__ import annotations
+
+import io
+import json
+import re
+import shutil
+import time
+import uuid
+from pathlib import Path
+from typing import Literal, Optional
+
+from PIL import Image
+from pydantic import BaseModel, Field
+
+# Register HEIC/HEIF support so iPhone / macOS Photos exports load via Pillow.
+try:
+    import pillow_heif  # type: ignore
+
+    pillow_heif.register_heif_opener()
+except Exception:  # pragma: no cover - optional but installed by default
+    pass
+
+from . import config
+
+
+# --------------------------------------------------------------------------- #
+# Schema
+# --------------------------------------------------------------------------- #
+class Transition(BaseModel):
+    type: Literal["crossfade", "cut"] = "crossfade"
+    durationMs: int = config.DEFAULT_TRANSITION_MS
+
+
+class Output(BaseModel):
+    width: int = config.CAM_WIDTH
+    height: int = config.CAM_HEIGHT
+    fps: int = config.CAM_FPS
+
+
+class Slide(BaseModel):
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex[:8])
+    image: str                                   # relative to deck dir, or absolute
+    label: str = ""
+    mode: Literal["auto", "manual"] = "auto"
+    durationSec: Optional[float] = None          # used when mode == auto
+    fit: Optional[Literal["cover", "contain"]] = None
+    transition: Optional[Transition] = None
+
+
+class Defaults(BaseModel):
+    durationSec: float = config.DEFAULT_DURATION_SEC
+    fit: Literal["cover", "contain"] = config.DEFAULT_FIT
+    transition: Transition = Field(default_factory=Transition)
+
+
+class Deck(BaseModel):
+    version: int = 1
+    id: str
+    name: str
+    output: Output = Field(default_factory=Output)
+    background: str = config.DEFAULT_BACKGROUND
+    defaults: Defaults = Field(default_factory=Defaults)
+    slides: list[Slide] = Field(default_factory=list)
+
+    # --- effective (merged-with-defaults) accessors ------------------------ #
+    def eff_duration(self, slide: Slide) -> float:
+        return float(slide.durationSec if slide.durationSec is not None else self.defaults.durationSec)
+
+    def eff_fit(self, slide: Slide) -> str:
+        return slide.fit or self.defaults.fit
+
+    def eff_transition(self, slide: Slide) -> Transition:
+        return slide.transition or self.defaults.transition
+
+
+# --------------------------------------------------------------------------- #
+# Storage helpers
+# --------------------------------------------------------------------------- #
+def _slugify(name: str) -> str:
+    s = re.sub(r"[^a-zA-Z0-9]+", "-", name.strip().lower()).strip("-")
+    return s or "deck"
+
+
+def deck_dir(deck_id: str) -> Path:
+    return config.DECKS_DIR / deck_id
+
+
+def _images_dir(deck_id: str) -> Path:
+    d = deck_dir(deck_id) / "images"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _thumbs_dir(deck_id: str) -> Path:
+    d = deck_dir(deck_id) / "thumbs"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _deck_json(deck_id: str) -> Path:
+    return deck_dir(deck_id) / "deck.json"
+
+
+def resolve_image(deck_id: str, image_ref: str) -> Path:
+    """Resolve a slide's image reference (relative or absolute) to a real path."""
+    p = Path(image_ref)
+    if p.is_absolute():
+        return p
+    return deck_dir(deck_id) / image_ref
+
+
+# --------------------------------------------------------------------------- #
+# CRUD
+# --------------------------------------------------------------------------- #
+def list_decks() -> list[dict]:
+    out = []
+    for child in sorted(config.DECKS_DIR.iterdir()) if config.DECKS_DIR.exists() else []:
+        jf = child / "deck.json"
+        if jf.is_file():
+            try:
+                data = json.loads(jf.read_text())
+                out.append(
+                    {
+                        "id": data.get("id", child.name),
+                        "name": data.get("name", child.name),
+                        "slideCount": len(data.get("slides", [])),
+                        "updated": jf.stat().st_mtime,
+                    }
+                )
+            except Exception:
+                continue
+    out.sort(key=lambda d: d["updated"], reverse=True)
+    return out
+
+
+def create_deck(name: str) -> Deck:
+    base = _slugify(name)
+    deck_id = base
+    n = 2
+    while deck_dir(deck_id).exists():
+        deck_id = f"{base}-{n}"
+        n += 1
+    deck = Deck(id=deck_id, name=name)
+    _images_dir(deck_id)
+    _thumbs_dir(deck_id)
+    save_deck(deck)
+    return deck
+
+
+def get_deck(deck_id: str) -> Deck:
+    jf = _deck_json(deck_id)
+    if not jf.is_file():
+        raise FileNotFoundError(deck_id)
+    return Deck.model_validate_json(jf.read_text())
+
+
+def save_deck(deck: Deck) -> Deck:
+    deck_dir(deck.id).mkdir(parents=True, exist_ok=True)
+    _deck_json(deck.id).write_text(json.dumps(deck.model_dump(), indent=2))
+    # Make sure every slide has a thumbnail.
+    for slide in deck.slides:
+        ensure_thumb(deck, slide)
+    return deck
+
+
+def delete_deck(deck_id: str) -> None:
+    d = deck_dir(deck_id)
+    if d.exists():
+        shutil.rmtree(d)
+
+
+def duplicate_deck(deck_id: str) -> Deck:
+    src = get_deck(deck_id)
+    new = create_deck(f"{src.name} (copy)")
+    # copy image files
+    src_imgs = deck_dir(deck_id) / "images"
+    if src_imgs.exists():
+        shutil.copytree(src_imgs, _images_dir(new.id), dirs_exist_ok=True)
+    # carry over settings + slides (slides keep relative refs which now point at the copy)
+    new.background = src.background
+    new.defaults = src.defaults
+    new.output = src.output
+    new.slides = [s.model_copy(update={"id": uuid.uuid4().hex[:8]}) for s in src.slides]
+    save_deck(new)
+    return new
+
+
+# --------------------------------------------------------------------------- #
+# Image import
+# --------------------------------------------------------------------------- #
+def _next_image_name(deck_id: str, suffix: str) -> str:
+    existing = list(_images_dir(deck_id).glob("*"))
+    idx = len(existing) + 1
+    return f"{idx:03d}{suffix}"
+
+
+def add_image_bytes(deck: Deck, data: bytes, filename: str) -> Slide:
+    """Import an uploaded image. HEIC/HEIF are converted to PNG on the way in."""
+    ext = Path(filename).suffix.lower()
+    img = Image.open(io.BytesIO(data))
+    img.load()
+    if ext in {".heic", ".heif"}:
+        ext = ".png"
+    if ext not in config.SUPPORTED_EXTS:
+        ext = ".png"
+    out_name = _next_image_name(deck.id, ext)
+    out_path = _images_dir(deck.id) / out_name
+    save_kwargs = {}
+    if ext in {".jpg", ".jpeg"}:
+        img = img.convert("RGB")
+    img.save(out_path, **save_kwargs)
+    slide = Slide(image=f"images/{out_name}", label=Path(filename).stem)
+    deck.slides.append(slide)
+    ensure_thumb(deck, slide)
+    return slide
+
+
+def add_from_path(deck: Deck, path_str: str) -> list[Slide]:
+    """Add a single image by absolute path, or every image inside a folder."""
+    p = Path(path_str).expanduser()
+    if not p.exists():
+        raise FileNotFoundError(path_str)
+    targets: list[Path]
+    if p.is_dir():
+        targets = sorted(c for c in p.iterdir() if c.suffix.lower() in config.SUPPORTED_EXTS)
+    else:
+        if p.suffix.lower() not in config.SUPPORTED_EXTS:
+            raise ValueError(f"Unsupported image type: {p.suffix}")
+        targets = [p]
+    added: list[Slide] = []
+    for t in targets:
+        slide = Slide(image=str(t.resolve()), label=t.stem)
+        deck.slides.append(slide)
+        ensure_thumb(deck, slide)
+        added.append(slide)
+    return added
+
+
+# --------------------------------------------------------------------------- #
+# Thumbnails
+# --------------------------------------------------------------------------- #
+def thumb_path(deck_id: str, slide_id: str) -> Path:
+    return _thumbs_dir(deck_id) / f"{slide_id}.jpg"
+
+
+def ensure_thumb(deck: Deck, slide: Slide) -> Optional[Path]:
+    tp = thumb_path(deck.id, slide.id)
+    src = resolve_image(deck.id, slide.image)
+    try:
+        if tp.exists() and src.exists() and tp.stat().st_mtime >= src.stat().st_mtime:
+            return tp
+        img = Image.open(src)
+        img.load()
+        img = img.convert("RGB")
+        w = config.THUMB_WIDTH
+        h = max(1, round(img.height * w / img.width))
+        img = img.resize((w, h), Image.LANCZOS)
+        img.save(tp, "JPEG", quality=80)
+        return tp
+    except Exception:
+        return None
