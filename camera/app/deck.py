@@ -58,6 +58,7 @@ class Slide(BaseModel):
     fit: Optional[Literal["cover", "contain"]] = None
     transition: Optional[Transition] = None
     temperature: Optional[float] = None          # IR-thermometer target temp for this frame
+    dip: Optional[float] = None                  # deg the reading drops on entry, then recovers
 
 
 class Defaults(BaseModel):

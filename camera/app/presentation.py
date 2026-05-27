@@ -51,10 +51,7 @@ class Presentation:
 
     def _frame_for(self, slide: Slide):
         path = deck_mod.resolve_image(self.deck.id, slide.image)
-        frame = frames.render(path, fit=self.deck.eff_fit(slide), background=self.deck.background)
-        if self.mirror:
-            frame = frames.flip_h(frame)
-        return frame
+        return frames.render(path, fit=self.deck.eff_fit(slide), background=self.deck.background)
 
     def _show(self, index: int, use_transition: bool) -> None:
         self.index = index
@@ -71,7 +68,7 @@ class Presentation:
         if slide is None:
             return
         dur = self.deck.eff_duration(slide) if slide.mode == "auto" else None
-        self.temp.begin_segment(slide.temperature, dur)
+        self.temp.begin_segment(slide.temperature, dur, slide.dip)
 
     def _arm_timer(self) -> None:
         slide = self.current
@@ -87,6 +84,7 @@ class Presentation:
             self.index = 0
             self.remaining = None
             self.mirror = bool(deck.mirror)
+            self.engine.set_mirror(self.mirror)
             self.temp.configure(deck.thermal)
             if not deck.thermal.enabled:
                 self.engine.set_overlay(None)
@@ -179,11 +177,12 @@ class Presentation:
     def set_mirror(self, value: bool) -> None:
         with self._lock:
             self.mirror = bool(value)
+            self.engine.set_mirror(self.mirror)
             if self.deck is not None:
                 self.deck.mirror = self.mirror
             slide = self.current
             if slide is not None:
-                # re-render the live image with the new flip (instant cut)
+                # re-render the live image for an instant cut with the new final transform
                 self.engine.set_target(self._frame_for(slide), 0)
 
     def update_timing(self, slide_id: str, duration=None, mode=None, temperature=None) -> bool:
@@ -206,7 +205,7 @@ class Presentation:
             if slide is self.current and self.status in (PLAYING, PAUSED, STANDBY):
                 self.remaining = self.deck.eff_duration(slide) if slide.mode == "auto" else None
                 if temperature is not None:
-                    self.temp.begin_segment(slide.temperature, self.remaining)
+                    self.temp.begin_segment(slide.temperature, self.remaining, slide.dip)
             return True
 
     def tick(self, dt: float) -> None:
@@ -252,7 +251,7 @@ class Presentation:
                 "remaining": round(self.remaining, 2) if self.remaining is not None else None,
                 "duration": duration,
                 "mirror": self.mirror,
-                "temp": round(self.temp.display, 1) if (self.temp.enabled and self.temp.display is not None) else None,
+                "temp": round(self.temp.display) if (self.temp.enabled and self.temp.display is not None) else None,
                 "tempZone": self.temp.zone() if self.temp.enabled else None,
-                "tempTarget": slide.temperature if slide else None,
+                "tempTarget": round(slide.temperature) if (slide and slide.temperature is not None) else None,
             }

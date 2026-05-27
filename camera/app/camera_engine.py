@@ -37,6 +37,7 @@ class CameraEngine:
         self._fade_start = 0.0
         self._fade_dur = 0.0                                  # seconds; 0 == no fade
         self._overlay = None                                  # (rgba_tile, x, y) | None
+        self._mirror = False                                  # flip the fully composited frame
 
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -79,6 +80,11 @@ class CameraEngine:
     def set_overlay(self, rgba: np.ndarray | None, x: int = 0, y: int = 0) -> None:
         """Set (or clear) an RGBA HUD tile alpha-blended onto every frame."""
         self._overlay = None if rgba is None else (rgba, int(x), int(y))
+
+    def set_mirror(self, mirror: bool) -> None:
+        """Mirror the final camera output after image + HUD compositing."""
+        with self._lock:
+            self._mirror = bool(mirror)
 
     @property
     def preview_jpeg(self) -> bytes:
@@ -126,6 +132,13 @@ class CameraEngine:
                 return frames.blend(self._from, self._target, t)
             return self._displayed
 
+    def _finalize_frame(self, frame: np.ndarray, overlay) -> np.ndarray:
+        if overlay is not None:
+            frame = self._composite_overlay(frame, overlay)
+        with self._lock:
+            mirror = self._mirror
+        return frames.flip_h(frame) if mirror else frame
+
     def _open_camera(self):
         if pyvirtualcam is None:
             self.device_error = "pyvirtualcam not available"
@@ -157,8 +170,7 @@ class CameraEngine:
             while not self._stop.is_set():
                 frame = self._compute_displayed()
                 ov = self._overlay
-                if ov is not None:
-                    frame = self._composite_overlay(frame, ov)
+                frame = self._finalize_frame(frame, ov)
 
                 # update preview every Nth frame to limit CPU
                 self._preview_counter += 1

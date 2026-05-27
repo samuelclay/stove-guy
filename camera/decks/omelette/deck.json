@@ -8,16 +8,16 @@
     "fps": 30
   },
   "background": "#000000",
-  "mirror": false,
+  "mirror": true,
   "thermal": {
     "enabled": true,
     "unit": "F",
-    "coldThreshold": 300.0,
-    "burnThreshold": 420.0,
+    "coldThreshold": 250.0,
+    "burnThreshold": 350.0,
     "coldLabel": "Too cold \u2014 wait for the oil to heat",
     "burnLabel": "You're burning the omelet above this!",
     "minTemp": 60.0,
-    "maxTemp": 540.0
+    "maxTemp": 480.0
   },
   "defaults": {
     "durationSec": 4.0,
@@ -36,27 +36,30 @@
       "durationSec": 9.1,
       "fit": null,
       "transition": null,
-      "temperature": 75.0
+      "temperature": 70.0,
+      "dip": null
     },
     {
       "id": "omelette-002",
       "image": "images/002-empty-pan.png",
       "label": "Empty pan",
       "mode": "auto",
-      "durationSec": 4.0,
+      "durationSec": 9.1,
       "fit": null,
       "transition": null,
-      "temperature": 200.0
+      "temperature": 210.0,
+      "dip": null
     },
     {
       "id": "omelette-003",
       "image": "images/003-cold-oil.png",
       "label": "Cold oil",
       "mode": "auto",
-      "durationSec": 4.0,
+      "durationSec": 9.1,
       "fit": null,
       "transition": null,
-      "temperature": 230.0
+      "temperature": 235.0,
+      "dip": null
     },
     {
       "id": "omelette-004",
@@ -66,7 +69,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 330.0
+      "temperature": 300.0,
+      "dip": null
     },
     {
       "id": "omelette-005",
@@ -76,7 +80,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 300.0
+      "temperature": 255.0,
+      "dip": null
     },
     {
       "id": "omelette-006",
@@ -86,7 +91,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 330.0
+      "temperature": 275.0,
+      "dip": null
     },
     {
       "id": "omelette-007",
@@ -96,7 +102,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 350.0
+      "temperature": 290.0,
+      "dip": null
     },
     {
       "id": "omelette-008",
@@ -106,7 +113,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 360.0
+      "temperature": 300.0,
+      "dip": null
     },
     {
       "id": "omelette-009",
@@ -116,7 +124,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 345.0
+      "temperature": 295.0,
+      "dip": 40.0
     },
     {
       "id": "omelette-010",
@@ -126,7 +135,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 360.0
+      "temperature": 305.0,
+      "dip": null
     },
     {
       "id": "omelette-011",
@@ -136,7 +146,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 375.0
+      "temperature": 315.0,
+      "dip": null
     },
     {
       "id": "omelette-012",
@@ -146,7 +157,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 395.0
+      "temperature": 325.0,
+      "dip": null
     },
     {
       "id": "omelette-013",
@@ -156,7 +168,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 405.0
+      "temperature": 335.0,
+      "dip": null
     },
     {
       "id": "omelette-014",
@@ -166,7 +179,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 430.0
+      "temperature": 365.0,
+      "dip": null
     },
     {
       "id": "omelette-015",
@@ -176,7 +190,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 460.0
+      "temperature": 395.0,
+      "dip": null
     },
     {
       "id": "omelette-016",
@@ -186,7 +201,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 490.0
+      "temperature": 425.0,
+      "dip": null
     },
     {
       "id": "omelette-017",
@@ -196,7 +212,8 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 520.0
+      "temperature": 465.0,
+      "dip": null
     }
   ]
 }

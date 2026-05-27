@@ -264,13 +264,13 @@ function renderSlides() {
           <option value="crossfade">crossfade</option>
         </select>
         <input type="number" class="trans-ms hidden" min="0" step="50" title="crossfade ms" />
-        <input type="number" class="slide-temp" step="5" placeholder="temp°" title="target temperature" />
+        <input type="number" class="slide-temp" step="1" placeholder="temp°" title="target temperature" />
         <button class="del-slide" title="Remove">🗑</button>
       </div>`;
 
     $(".fit", row).value = s.fit || "";
-    $(".slide-temp", row).value = s.temperature ?? "";
-    $(".slide-temp", row).onchange = (e) => { s.temperature = e.target.value === "" ? null : parseFloat(e.target.value); scheduleSave(); };
+    $(".slide-temp", row).value = s.temperature == null ? "" : Math.round(s.temperature);
+    $(".slide-temp", row).onchange = (e) => { s.temperature = e.target.value === "" ? null : Math.round(parseFloat(e.target.value)); scheduleSave(); };
 
     // per-slide transition controls
     const transSel = $(".trans", row);
@@ -448,10 +448,10 @@ function renderFilmThermo(film, s, i) {
   span.style.display = "";
   span.innerHTML =
     `<span class="thermo-ico">◎</span>` +
-    `<input class="film-temp" type="number" step="5" value="${s.temperature ?? ""}" placeholder="—" title="target temperature" />` +
+    `<input class="film-temp" type="number" step="1" value="${s.temperature == null ? "" : Math.round(s.temperature)}" placeholder="—" title="target temperature" />` +
     `<span class="su">°${th.unit || "F"}</span>`;
   $(".film-temp", span).onchange = (e) =>
-    saveTiming(s, i, { temperature: e.target.value === "" ? null : parseFloat(e.target.value) });
+    saveTiming(s, i, { temperature: e.target.value === "" ? null : Math.round(parseFloat(e.target.value)) });
 }
 
 // inline per-slide timing editing in the presenter — saved straight to the

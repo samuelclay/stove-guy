@@ -3,7 +3,8 @@
 The reading ramps linearly from its current value to the active slide's target
 temperature over that slide's timer (so it moves in real time and stays
 continuous across slides), with small random jitter on top — larger when cool,
-tapering as it gets hot. A rolling history feeds the HUD sparkline.
+tapering as it gets hot. A cumulative history of the whole session feeds the HUD
+sparkline, so the graph densifies as cooking progresses.
 """
 from __future__ import annotations
 
@@ -13,9 +14,9 @@ from collections import deque
 JITTER_INTERVAL = 1.0      # re-roll the random offset at most this often (s)
 JITTER_EASE = 4.0          # how fast the displayed jitter chases its target
 MANUAL_EASE = 3.0          # ramp time (s) for manual slides / unknown durations
+DIP_FRACTION = 0.3         # portion of a slide spent dropping before recovering
 SAMPLE_DT = 0.5            # how often a point is recorded for the sparkline
-HISTORY_SECONDS = 50.0
-HIST_MAX = int(HISTORY_SECONDS / SAMPLE_DT)
+HIST_MAX = 6000            # keep the whole session (~50 min); the graph densifies
 
 
 def _amp(temp: float) -> float:
@@ -46,6 +47,7 @@ class TemperatureModel:
         self._from = 0.0
         self._to: float | None = None
         self._dur = 0.0
+        self._dip = 0.0
         self._elapsed = 0.0
         self._jit = 0.0
         self._jit_target = 0.0
@@ -70,14 +72,17 @@ class TemperatureModel:
         self._from = target if target is not None else 0.0
         self._to = target
         self._dur = 0.0
+        self._dip = 0.0
         self._elapsed = 0.0
         self._jit = 0.0
         self._jit_target = 0.0
         self._jit_timer = 0.0
         self._sample_timer = 0.0
 
-    def begin_segment(self, target: float | None, duration: float | None) -> None:
-        """Start ramping from the current reading toward ``target``."""
+    def begin_segment(self, target: float | None, duration: float | None, dip: float | None = None) -> None:
+        """Start ramping from the current reading toward ``target``. If ``dip`` is
+        set, the reading first drops by that many degrees (a cold ingredient
+        hitting the pan) and then recovers up to the target across the slide."""
         if target is None:
             return
         if self.base is None:
@@ -86,6 +91,7 @@ class TemperatureModel:
         self._from = self.base
         self._to = target
         self._dur = duration if (duration and duration > 0) else MANUAL_EASE
+        self._dip = dip or 0.0
         self._elapsed = 0.0
 
     # ---------------------------------------------------------------- update
@@ -98,7 +104,14 @@ class TemperatureModel:
         if advancing and self._dur > 0 and self._elapsed < self._dur:
             self._elapsed += dt
             frac = min(1.0, self._elapsed / self._dur)
-            self.base = self._from + (self._to - self._from) * frac
+            if self._dip > 0:
+                bottom = self._from - self._dip
+                if frac < DIP_FRACTION:
+                    self.base = self._from + (bottom - self._from) * (frac / DIP_FRACTION)
+                else:
+                    self.base = bottom + (self._to - bottom) * ((frac - DIP_FRACTION) / (1.0 - DIP_FRACTION))
+            else:
+                self.base = self._from + (self._to - self._from) * frac
 
         self._jit_timer += dt
         if self._jit_timer >= JITTER_INTERVAL:
