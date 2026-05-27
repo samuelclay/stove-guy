@@ -125,6 +125,9 @@ camera/.venv/bin/python camera/make_sample.py
 - **Camera pill shows "camera offline"** — the OBS extension isn't approved or
   the Mac needs a reboot (see setup step 2). The web UI and preview still work
   without the device.
+- **Approved the extension while the server was already running?** macOS caches
+  the camera-device list per process, so a server started *before* activation
+  won't see the new device. Just **restart the server** (re-run `run.sh`).
 - **Frozen / black in the call app** — make sure OBS is **not** also running its
   virtual camera; only one producer can drive the device at a time.
 - **HEIC didn't import** — `pillow-heif` is in `requirements.txt`; re-run
