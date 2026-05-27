@@ -9,6 +9,16 @@
   },
   "background": "#000000",
   "mirror": false,
+  "thermal": {
+    "enabled": true,
+    "unit": "F",
+    "coldThreshold": 300.0,
+    "burnThreshold": 420.0,
+    "coldLabel": "Too cold \u2014 wait for the oil to heat",
+    "burnLabel": "You're burning the omelet above this!",
+    "minTemp": 60.0,
+    "maxTemp": 540.0
+  },
   "defaults": {
     "durationSec": 4.0,
     "fit": "cover",
@@ -20,129 +30,173 @@
   "slides": [
     {
       "id": "omelette-001",
-      "image": "images/001-empty-pan.png",
+      "image": "images/001-dry-empty-pan.png",
+      "label": "Dry empty pan",
+      "mode": "manual",
+      "durationSec": 9.1,
+      "fit": null,
+      "transition": null,
+      "temperature": 75.0
+    },
+    {
+      "id": "omelette-002",
+      "image": "images/002-empty-pan.png",
       "label": "Empty pan",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 200.0
     },
     {
-      "id": "omelette-002",
-      "image": "images/002-raw-scrambled-eggs.png",
+      "id": "omelette-003",
+      "image": "images/003-cold-oil.png",
+      "label": "Cold oil",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 230.0
+    },
+    {
+      "id": "omelette-004",
+      "image": "images/004-hot-oil.png",
+      "label": "Hot oil",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 330.0
+    },
+    {
+      "id": "omelette-005",
+      "image": "images/005-raw-scrambled-eggs.png",
       "label": "Raw scrambled eggs",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 300.0
     },
     {
-      "id": "omelette-003",
-      "image": "images/003-edges-setting.png",
+      "id": "omelette-006",
+      "image": "images/006-edges-setting.png",
       "label": "Edges setting",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 330.0
     },
     {
-      "id": "omelette-004",
-      "image": "images/004-mostly-cooked-eggs.png",
+      "id": "omelette-007",
+      "image": "images/007-mostly-cooked-eggs.png",
       "label": "Mostly cooked eggs",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 350.0
     },
     {
-      "id": "omelette-005",
-      "image": "images/005-flipped-eggs.png",
+      "id": "omelette-008",
+      "image": "images/008-flipped-eggs.png",
       "label": "Flipped eggs",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 360.0
     },
     {
-      "id": "omelette-006",
-      "image": "images/006-veggies-added.png",
+      "id": "omelette-009",
+      "image": "images/009-veggies-added.png",
       "label": "Veggies added",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 345.0
     },
     {
-      "id": "omelette-007",
-      "image": "images/007-cheese-added.png",
+      "id": "omelette-010",
+      "image": "images/010-cheese-added.png",
       "label": "Cheese added",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 360.0
     },
     {
-      "id": "omelette-008",
-      "image": "images/008-omelette-closed.png",
+      "id": "omelette-011",
+      "image": "images/011-omelette-closed.png",
       "label": "Omelette closed",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 375.0
     },
     {
-      "id": "omelette-009",
-      "image": "images/009-finished-golden.png",
+      "id": "omelette-012",
+      "image": "images/012-finished-golden.png",
       "label": "Finished golden",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 395.0
     },
     {
-      "id": "omelette-010",
-      "image": "images/010-finished-garnished.png",
+      "id": "omelette-013",
+      "image": "images/013-finished-garnished.png",
       "label": "Finished garnished",
-      "mode": "manual",
-      "durationSec": null,
+      "mode": "auto",
+      "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 405.0
     },
     {
-      "id": "omelette-011",
-      "image": "images/011-beginning-to-burn.png",
+      "id": "omelette-014",
+      "image": "images/014-beginning-to-burn.png",
       "label": "Beginning to burn",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 430.0
     },
     {
-      "id": "omelette-012",
-      "image": "images/012-bit-overdone.png",
+      "id": "omelette-015",
+      "image": "images/015-bit-overdone.png",
       "label": "Bit overdone",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 460.0
     },
     {
-      "id": "omelette-013",
-      "image": "images/013-definitely-overdone.png",
+      "id": "omelette-016",
+      "image": "images/016-definitely-overdone.png",
       "label": "Definitely overdone",
       "mode": "auto",
       "durationSec": 4.0,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 490.0
     },
     {
-      "id": "omelette-014",
-      "image": "images/014-crispy-overdone.png",
+      "id": "omelette-017",
+      "image": "images/017-crispy-overdone.png",
       "label": "Crispy overdone",
       "mode": "manual",
       "durationSec": null,
       "fit": null,
-      "transition": null
+      "transition": null,
+      "temperature": 520.0
     }
   ]
 }
