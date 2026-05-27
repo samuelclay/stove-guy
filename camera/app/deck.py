@@ -341,8 +341,16 @@ def thumb_path(deck_id: str, slide_id: str) -> Path:
 def ensure_thumb(deck: Deck, slide: Slide) -> Optional[Path]:
     tp = thumb_path(deck.id, slide.id)
     src = resolve_image(deck.id, slide.image)
+    marker = tp.with_suffix(".src")
     try:
-        if tp.exists() and src.exists() and tp.stat().st_mtime >= src.stat().st_mtime:
+        if not src.exists():
+            return tp if tp.exists() else None
+        # Cache key = which image + its mtime. Keying on the source (not just the
+        # thumb's own mtime) means a slide that now points at a *different* image
+        # (after inserting/reordering frames) invalidates the thumbnail even when
+        # the new image file is older than the previously-cached thumb.
+        sig = f"{src}|{int(src.stat().st_mtime)}"
+        if tp.exists() and marker.exists() and marker.read_text() == sig:
             return tp
         img = Image.open(src)
         img.load()
@@ -351,6 +359,7 @@ def ensure_thumb(deck: Deck, slide: Slide) -> Optional[Path]:
         h = max(1, round(img.height * w / img.width))
         img = img.resize((w, h), Image.LANCZOS)
         img.save(tp, "JPEG", quality=80)
+        marker.write_text(sig)
         return tp
     except Exception:
         return None
