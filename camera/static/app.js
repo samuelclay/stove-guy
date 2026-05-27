@@ -203,10 +203,44 @@ function renderSlides() {
           <option value="cover">cover</option>
           <option value="contain">contain</option>
         </select>
+        <select class="mini-select trans">
+          <option value="">fade: default</option>
+          <option value="cut">cut</option>
+          <option value="crossfade">crossfade</option>
+        </select>
+        <input type="number" class="trans-ms hidden" min="0" step="50" title="crossfade ms" />
         <button class="del-slide" title="Remove">🗑</button>
       </div>`;
 
     $(".fit", row).value = s.fit || "";
+
+    // per-slide transition controls
+    const transSel = $(".trans", row);
+    const transMs = $(".trans-ms", row);
+    const syncTransUI = () => {
+      if (!s.transition) { transSel.value = ""; transMs.classList.add("hidden"); }
+      else if (s.transition.type === "cut") { transSel.value = "cut"; transMs.classList.add("hidden"); }
+      else {
+        transSel.value = "crossfade";
+        transMs.classList.remove("hidden");
+        transMs.value = s.transition.durationMs ?? deck.defaults.transition.durationMs;
+      }
+    };
+    syncTransUI();
+    transSel.onchange = (e) => {
+      const v = e.target.value;
+      if (v === "") s.transition = null;
+      else if (v === "cut") s.transition = { type: "cut", durationMs: 0 };
+      else s.transition = { type: "crossfade", durationMs: deck.defaults.transition.durationMs };
+      syncTransUI();
+      scheduleSave();
+    };
+    transMs.onchange = (e) => {
+      if (s.transition && s.transition.type === "crossfade") {
+        s.transition.durationMs = parseInt(e.target.value) || 0;
+        scheduleSave();
+      }
+    };
     $(".lbl", row).oninput = (e) => { s.label = e.target.value; scheduleSave(); };
     $(".fit", row).onchange = (e) => { s.fit = e.target.value || null; scheduleSave(); };
     const durEl = $(".dur-input", row);

@@ -141,7 +141,8 @@ main { padding: 22px; max-width: 1200px; margin: 0 auto; }
 .slide-row .slabel input { background: transparent; border: none; color: var(--text); font-size: 14px; width: 100%; padding: 4px; border-radius: 6px; }
 .slide-row .slabel input:focus { outline: none; background: var(--panel); }
 .slide-row .slabel .path { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 4px; }
-.slide-row .controls { display: flex; align-items: center; gap: 8px; }
+.slide-row .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.trans-ms { width: 64px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 6px; font-size: 13px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .seg button { background: var(--panel); color: var(--muted); border: none; padding: 6px 10px; font-size: 12.5px; cursor: pointer; }
 .seg button.on { background: var(--accent); color: #1a0e08; font-weight: 600; }
