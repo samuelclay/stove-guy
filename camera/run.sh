@@ -11,4 +11,9 @@ if [ ! -x ".venv/bin/python" ]; then
 fi
 
 echo "Stove Guy camera control:  http://127.0.0.1:8000"
-exec .venv/bin/python -m uvicorn app.server:app --host 127.0.0.1 --port 8000 "$@"
+# --timeout-graceful-shutdown: the live MJPEG preview + WebSocket hold
+# connections open forever, so cap graceful shutdown to a few seconds. This
+# lets the camera close cleanly on Ctrl-C / restart (a stuck shutdown can
+# leave the OBS device feeding a stale frame to attached apps like Photo Booth).
+exec .venv/bin/python -m uvicorn app.server:app \
+  --host 127.0.0.1 --port 8000 --timeout-graceful-shutdown 3 "$@"
