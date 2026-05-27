@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "id": "demo",
+  "name": "Demo \u2014 A/B/C auto, D manual",
+  "output": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "background": "#000000",
+  "mirror": false,
+  "defaults": {
+    "durationSec": 5.0,
+    "fit": "cover",
+    "transition": {
+      "type": "crossfade",
+      "durationMs": 300
+    }
+  },
+  "slides": [
+    {
+      "id": "b8185ddd",
+      "image": "images/001.png",
+      "label": "Slide A",
+      "mode": "auto",
+      "durationSec": 5.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "a0be4440",
+      "image": "images/002.png",
+      "label": "Slide B",
+      "mode": "auto",
+      "durationSec": 5.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "a263cd9d",
+      "image": "images/003.png",
+      "label": "Slide C",
+      "mode": "auto",
+      "durationSec": 5.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "201e9f92",
+      "image": "images/004.png",
+      "label": "Slide D",
+      "mode": "manual",
+      "durationSec": null,
+      "fit": null,
+      "transition": null
+    }
+  ]
+}

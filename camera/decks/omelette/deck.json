@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "id": "omelette",
+  "name": "Omelette - range hood progression",
+  "output": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "background": "#000000",
+  "mirror": false,
+  "defaults": {
+    "durationSec": 4.0,
+    "fit": "cover",
+    "transition": {
+      "type": "crossfade",
+      "durationMs": 250
+    }
+  },
+  "slides": [
+    {
+      "id": "omelette-001",
+      "image": "images/001-empty-pan.png",
+      "label": "Empty pan",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-002",
+      "image": "images/002-raw-scrambled-eggs.png",
+      "label": "Raw scrambled eggs",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-003",
+      "image": "images/003-edges-setting.png",
+      "label": "Edges setting",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-004",
+      "image": "images/004-mostly-cooked-eggs.png",
+      "label": "Mostly cooked eggs",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-005",
+      "image": "images/005-flipped-eggs.png",
+      "label": "Flipped eggs",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-006",
+      "image": "images/006-veggies-added.png",
+      "label": "Veggies added",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-007",
+      "image": "images/007-cheese-added.png",
+      "label": "Cheese added",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-008",
+      "image": "images/008-omelette-closed.png",
+      "label": "Omelette closed",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-009",
+      "image": "images/009-finished-golden.png",
+      "label": "Finished golden",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-010",
+      "image": "images/010-finished-garnished.png",
+      "label": "Finished garnished",
+      "mode": "manual",
+      "durationSec": null,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-011",
+      "image": "images/011-beginning-to-burn.png",
+      "label": "Beginning to burn",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-012",
+      "image": "images/012-bit-overdone.png",
+      "label": "Bit overdone",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-013",
+      "image": "images/013-definitely-overdone.png",
+      "label": "Definitely overdone",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null
+    },
+    {
+      "id": "omelette-014",
+      "image": "images/014-crispy-overdone.png",
+      "label": "Crispy overdone",
+      "mode": "manual",
+      "durationSec": null,
+      "fit": null,
+      "transition": null
+    }
+  ]
+}
