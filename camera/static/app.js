@@ -30,7 +30,8 @@ function toast(msg, isErr = false) {
   toastTimer = setTimeout(() => t.classList.add("hidden"), 3200);
 }
 
-const thumbUrl = (deckId, slideId) => `/api/decks/${deckId}/thumb/${slideId}`;
+const deckPath = (deckId) => `/api/decks/${encodeURIComponent(deckId)}`;
+const thumbUrl = (deckId, slideId) => `${deckPath(deckId)}/thumb/${encodeURIComponent(slideId)}`;
 const fmtDate = (ts) => new Date(ts * 1000).toLocaleString();
 
 // --------------------------------------------------------------------------
@@ -81,32 +82,69 @@ function updateCamStatus(cam) {
 // LIBRARY
 // ==========================================================================
 async function loadLibrary() {
-  const decks = await api("GET", "/api/decks");
+  const deckSummaries = await api("GET", "/api/decks");
+  const decks = await Promise.all(deckSummaries.map(async (summary) => {
+    try {
+      return { ...summary, deck: await api("GET", deckPath(summary.id)) };
+    } catch (e) {
+      return { ...summary, deck: null, loadError: e.message };
+    }
+  }));
   const grid = $("#deckGrid");
   grid.innerHTML = "";
   $("#libraryEmpty").classList.toggle("hidden", decks.length > 0);
   for (const d of decks) {
-    const card = document.createElement("div");
-    card.className = "deck-card";
-    card.innerHTML = `
-      <h3></h3>
-      <div class="meta"></div>
-      <div class="actions">
-        <button class="btn primary" data-a="present">▶ Present</button>
-        <button class="btn" data-a="edit">Edit</button>
-        <button class="btn" data-a="dup">Duplicate</button>
-        <button class="btn danger" data-a="del">Delete</button>
-      </div>`;
-    $("h3", card).textContent = d.name;
-    $(".meta", card).textContent = `${d.slideCount} slide${d.slideCount === 1 ? "" : "s"} · ${fmtDate(d.updated)}`;
-    $('[data-a="present"]', card).onclick = () => openPresenter(d.id);
-    $('[data-a="edit"]', card).onclick = () => openEditor(d.id);
-    $('[data-a="dup"]', card).onclick = async () => { await api("POST", `/api/decks/${d.id}/duplicate`); loadLibrary(); };
-    $('[data-a="del"]', card).onclick = async () => {
+    const row = document.createElement("section");
+    row.className = "recipe-row";
+    row.innerHTML = `
+      <div class="recipe-head">
+        <div>
+          <h2></h2>
+          <div class="meta"></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" data-a="present">▶ Present</button>
+          <button class="btn" data-a="edit">Edit</button>
+          <button class="btn" data-a="dup">Duplicate</button>
+          <button class="btn danger" data-a="del">Delete</button>
+        </div>
+      </div>
+      <div class="recipe-rail"></div>`;
+    $("h2", row).textContent = d.name;
+    $(".meta", row).textContent = d.loadError
+      ? `Could not load recipe · ${d.loadError}`
+      : `${d.slideCount} frame${d.slideCount === 1 ? "" : "s"} · ${fmtDate(d.updated)}`;
+    $('[data-a="present"]', row).onclick = () => openPresenter(d.id);
+    $('[data-a="edit"]', row).onclick = () => openEditor(d.id);
+    $('[data-a="dup"]', row).onclick = async () => { await api("POST", `${deckPath(d.id)}/duplicate`); loadLibrary(); };
+    $('[data-a="del"]', row).onclick = async () => {
       if (!confirm(`Delete "${d.name}"? This removes its images too.`)) return;
-      await api("DELETE", `/api/decks/${d.id}`); loadLibrary();
+      await api("DELETE", deckPath(d.id)); loadLibrary();
     };
-    grid.appendChild(card);
+
+    const rail = $(".recipe-rail", row);
+    if (d.deck && d.deck.slides.length) {
+      d.deck.slides.forEach((s, i) => {
+        const thumb = document.createElement("button");
+        thumb.className = "recipe-thumb";
+        thumb.type = "button";
+        thumb.title = s.label || `Frame ${i + 1}`;
+        thumb.innerHTML = `
+          <img src="${thumbUrl(d.id, s.id)}" alt="" />
+          <span class="thumb-index">${String(i + 1).padStart(3, "0")}</span>
+          <span class="thumb-label"></span>`;
+        $(".thumb-label", thumb).textContent = s.label || `Frame ${i + 1}`;
+        thumb.onclick = () => openPresenter(d.id, i);
+        rail.appendChild(thumb);
+      });
+    } else {
+      const empty = document.createElement("div");
+      empty.className = "rail-empty";
+      empty.textContent = "No frames yet";
+      rail.appendChild(empty);
+    }
+
+    grid.appendChild(row);
   }
 }
 
@@ -128,7 +166,7 @@ let deck = null;          // currently edited deck object
 let saveTimer = null;
 
 async function openEditor(deckId) {
-  deck = await api("GET", `/api/decks/${deckId}`);
+  deck = await api("GET", deckPath(deckId));
   showView("editor");
   $("#deckName").value = deck.name;
   $("#defDuration").value = deck.defaults.durationSec;
@@ -154,7 +192,7 @@ function scheduleSave() {
 async function saveNow() {
   clearTimeout(saveTimer);
   try {
-    await api("PUT", `/api/decks/${deck.id}`, deck);
+    await api("PUT", deckPath(deck.id), deck);
     setSaveState("saved");
   } catch (e) {
     toast("Save failed: " + e.message, true);
@@ -296,7 +334,7 @@ async function uploadFiles(fileList) {
   files.forEach((f) => fd.append("files", f));
   setSaveState("saving");
   try {
-    const res = await fetch(`/api/decks/${deck.id}/images`, { method: "POST", body: fd });
+    const res = await fetch(`${deckPath(deck.id)}/images`, { method: "POST", body: fd });
     if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
     deck = await res.json();
     renderSlides();
@@ -313,7 +351,7 @@ $("#pathBtn").onclick = async () => {
   const path = $("#pathInput").value.trim();
   if (!path) return;
   try {
-    deck = await api("POST", `/api/decks/${deck.id}/images/from-path`, { path });
+    deck = await api("POST", `${deckPath(deck.id)}/images/from-path`, { path });
     $("#pathInput").value = "";
     renderSlides();
     toast("Added from path");
@@ -329,14 +367,30 @@ $("#pathInput").onkeydown = (e) => { if (e.key === "Enter") $("#pathBtn").click(
 let presentDeck = null;     // deck with slides, for filmstrip
 let lastIndex = -1;
 
-async function openPresenter(deckId) {
-  presentDeck = await api("GET", `/api/decks/${deckId}`);
+async function openPresenter(deckId, startIndex = 0) {
+  presentDeck = await api("GET", deckPath(deckId));
   await api("POST", "/api/present/load", { deckId });
   showView("presenter");
   $("#presenterDeckName").textContent = presentDeck.name;
   lastIndex = -1;
   renderFilmstrip();
+  await renderRecipeSwitch(deckId);
   startPreview();
+  if (startIndex > 0) await present("jump", { index: startIndex });
+}
+
+async function renderRecipeSwitch(activeDeckId) {
+  const decks = await api("GET", "/api/decks");
+  const sel = $("#recipeSwitch");
+  sel.innerHTML = "";
+  decks.forEach((d) => {
+    const opt = document.createElement("option");
+    opt.value = d.id;
+    opt.textContent = d.name;
+    opt.selected = d.id === activeDeckId;
+    sel.appendChild(opt);
+  });
+  sel.onchange = () => openPresenter(sel.value);
 }
 
 function effDur(s) { return s.durationSec ?? presentDeck.defaults.durationSec; }
@@ -348,17 +402,45 @@ function renderFilmstrip() {
     const film = document.createElement("div");
     film.className = "film";
     film.dataset.idx = i;
-    const badge = s.mode === "manual"
-      ? `<span class="badge manual">MANUAL</span>`
-      : `<span class="badge">${effDur(s)}s</span>`;
     film.innerHTML = `
       <span class="liveflag">LIVE</span>
       <img src="${thumbUrl(presentDeck.id, s.id)}" alt="" />
-      <div class="cap"><span class="n">${i + 1}</span>${badge}</div>
+      <div class="cap"><span class="n">${i + 1}</span><span class="timing"></span></div>
       <div class="progress"></div>`;
-    film.onclick = () => present("jump", { index: i });
+    film.onclick = (e) => { if (!e.target.closest(".timing")) present("jump", { index: i }); };
     strip.appendChild(film);
+    renderFilmTiming(film, s, i);
   });
+}
+
+// inline per-slide timing editing in the presenter — saved straight to the
+// deck JSON, live, without disrupting the current position
+function renderFilmTiming(film, s, i) {
+  const span = $(".timing", film);
+  if (!span) return;
+  if (s.mode === "manual") {
+    span.innerHTML = `<button class="film-mode" title="Switch to timed (auto)">MANUAL</button>`;
+  } else {
+    span.innerHTML =
+      `<input class="film-dur" type="number" min="0.1" step="0.5" value="${effDur(s)}" title="seconds" />` +
+      `<span class="su">s</span>` +
+      `<button class="film-mode" title="Switch to manual hold">✋</button>`;
+  }
+  $(".film-mode", span).onclick = () => saveTiming(s, i, { mode: s.mode === "manual" ? "auto" : "manual" });
+  const durEl = $(".film-dur", span);
+  if (durEl) durEl.onchange = (e) => saveTiming(s, i, { durationSec: parseFloat(e.target.value) || effDur(s) });
+}
+
+async function saveTiming(s, i, changes) {
+  if (changes.mode === "auto" && s.durationSec == null) s.durationSec = presentDeck.defaults.durationSec;
+  Object.assign(s, changes);
+  try {
+    await api("POST", "/api/present/timing", { slideId: s.id, durationSec: s.durationSec ?? null, mode: s.mode });
+    const film = $(`#filmstrip .film[data-idx="${i}"]`);
+    if (film) renderFilmTiming(film, s, i);
+  } catch (e) {
+    toast("Save failed: " + e.message, true);
+  }
 }
 
 async function present(action, body) {

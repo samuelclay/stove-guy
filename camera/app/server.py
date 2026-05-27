@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import FastAPI, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
@@ -87,6 +87,12 @@ class LoadReq(BaseModel):
 
 class JumpReq(BaseModel):
     index: int
+
+
+class TimingReq(BaseModel):
+    slideId: str
+    durationSec: Optional[float] = None
+    mode: Optional[Literal["auto", "manual"]] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -193,6 +199,18 @@ async def api_present_load(req: LoadReq):
 def _require_deck():
     if presentation.deck is None:
         raise HTTPException(409, "no deck loaded")
+
+
+@app.post("/api/present/timing")
+async def api_present_timing(req: TimingReq):
+    """Live-edit a slide's duration/mode and persist to the deck JSON,
+    without resetting the presentation position."""
+    _require_deck()
+    if not presentation.update_timing(req.slideId, req.durationSec, req.mode):
+        raise HTTPException(404, "slide not found")
+    deck_mod.save_deck(presentation.deck)
+    await broadcast()
+    return presentation.state()
 
 
 @app.post("/api/present/{action}")

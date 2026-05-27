@@ -169,6 +169,26 @@ class Presentation:
                 # re-render the live image with the new flip (instant cut)
                 self.engine.set_target(self._frame_for(slide), 0)
 
+    def update_timing(self, slide_id: str, duration=None, mode=None) -> bool:
+        """Change a slide's duration/mode in place, WITHOUT resetting position.
+
+        If the edited slide is the one currently live, its countdown is
+        re-armed so the change takes effect immediately.
+        """
+        with self._lock:
+            if not self.deck:
+                return False
+            slide = next((s for s in self._slides if s.id == slide_id), None)
+            if slide is None:
+                return False
+            if mode in ("auto", "manual"):
+                slide.mode = mode
+            if duration is not None:
+                slide.durationSec = float(duration)
+            if slide is self.current and self.status in (PLAYING, PAUSED, STANDBY):
+                self.remaining = self.deck.eff_duration(slide) if slide.mode == "auto" else None
+            return True
+
     def tick(self, dt: float) -> None:
         """Advance the countdown; called ~10x/sec by the server's ticker."""
         with self._lock:

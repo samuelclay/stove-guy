@@ -84,7 +84,10 @@ reach the end and advance again, it **holds the last image**.
 
 ## The deck JSON (`decks/<id>/deck.json`)
 
-The file is plain, hand-editable JSON — this *is* the format you feed it:
+The file is plain, hand-editable JSON — this *is* the format you feed it.
+The library page also discovers image-only recipe folders, so a folder like
+`decks/omelette/images/001-empty-pan.png` through `010-finished.png` will show
+up as a recipe even before you add a `deck.json`.
 
 ```jsonc
 {

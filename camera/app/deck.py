@@ -5,6 +5,10 @@ Layout on disk:
         deck.json          # the hand-editable spec you can also feed directly
         images/            # uploaded image files (referenced by relative path)
         thumbs/            # generated filmstrip thumbnails, one per slide id
+
+Image-only folders are also accepted:
+    decks/<deck-id>/images/001.png
+    decks/<deck-id>/002.png
 """
 from __future__ import annotations
 
@@ -90,6 +94,15 @@ def _slugify(name: str) -> str:
     return s or "deck"
 
 
+def _title_from_slug(slug: str) -> str:
+    return re.sub(r"[-_]+", " ", slug).strip().title() or slug
+
+
+def _stable_slide_id(index: int, image_path: Path) -> str:
+    slug = _slugify(image_path.stem)
+    return f"{index:03d}-{slug}"[:64]
+
+
 def deck_dir(deck_id: str) -> Path:
     return config.DECKS_DIR / deck_id
 
@@ -118,12 +131,46 @@ def resolve_image(deck_id: str, image_ref: str) -> Path:
     return deck_dir(deck_id) / image_ref
 
 
+def _image_files_for_folder(deck_id: str) -> list[tuple[Path, str]]:
+    """Return sortable image files for an image-only recipe folder."""
+    root = deck_dir(deck_id)
+    if not root.is_dir():
+        return []
+
+    image_root = root / "images"
+    if image_root.is_dir():
+        files = sorted(p for p in image_root.iterdir() if p.suffix.lower() in config.SUPPORTED_EXTS)
+        return [(p, f"images/{p.name}") for p in files]
+
+    files = sorted(p for p in root.iterdir() if p.suffix.lower() in config.SUPPORTED_EXTS)
+    return [(p, p.name) for p in files]
+
+
+def _deck_from_image_folder(deck_id: str) -> Optional[Deck]:
+    images = _image_files_for_folder(deck_id)
+    if not images:
+        return None
+
+    deck = Deck(id=deck_id, name=_title_from_slug(deck_id))
+    for index, (path, image_ref) in enumerate(images, start=1):
+        deck.slides.append(
+            Slide(
+                id=_stable_slide_id(index, path),
+                image=image_ref,
+                label=path.stem,
+            )
+        )
+    return deck
+
+
 # --------------------------------------------------------------------------- #
 # CRUD
 # --------------------------------------------------------------------------- #
 def list_decks() -> list[dict]:
     out = []
     for child in sorted(config.DECKS_DIR.iterdir()) if config.DECKS_DIR.exists() else []:
+        if not child.is_dir():
+            continue
         jf = child / "deck.json"
         if jf.is_file():
             try:
@@ -138,6 +185,20 @@ def list_decks() -> list[dict]:
                 )
             except Exception:
                 continue
+        else:
+            deck = _deck_from_image_folder(child.name)
+            if deck is None:
+                continue
+            images = _image_files_for_folder(child.name)
+            updated = max((path.stat().st_mtime for path, _ in images), default=child.stat().st_mtime)
+            out.append(
+                {
+                    "id": deck.id,
+                    "name": deck.name,
+                    "slideCount": len(deck.slides),
+                    "updated": updated,
+                }
+            )
     out.sort(key=lambda d: d["updated"], reverse=True)
     return out
 
@@ -159,7 +220,10 @@ def create_deck(name: str) -> Deck:
 def get_deck(deck_id: str) -> Deck:
     jf = _deck_json(deck_id)
     if not jf.is_file():
-        raise FileNotFoundError(deck_id)
+        deck = _deck_from_image_folder(deck_id)
+        if deck is None:
+            raise FileNotFoundError(deck_id)
+        return deck
     return Deck.model_validate_json(jf.read_text())
 
 
@@ -181,11 +245,18 @@ def delete_deck(deck_id: str) -> None:
 def duplicate_deck(deck_id: str) -> Deck:
     src = get_deck(deck_id)
     new = create_deck(f"{src.name} (copy)")
-    # copy image files
-    src_imgs = deck_dir(deck_id) / "images"
-    if src_imgs.exists():
-        shutil.copytree(src_imgs, _images_dir(new.id), dirs_exist_ok=True)
-    # carry over settings + slides (slides keep relative refs which now point at the copy)
+    # Copy relative image refs into the same relative locations in the new deck.
+    # Absolute refs are intentionally kept in place.
+    for slide in src.slides:
+        ref = Path(slide.image)
+        if ref.is_absolute():
+            continue
+        src_path = deck_dir(deck_id) / ref
+        dst_path = deck_dir(new.id) / ref
+        if src_path.exists():
+            dst_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_path, dst_path)
+    # carry over settings + slides
     new.background = src.background
     new.defaults = src.defaults
     new.output = src.output

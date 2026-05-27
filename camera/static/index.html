@@ -21,17 +21,17 @@
     <!-- ============================= LIBRARY ============================= -->
     <section id="view-library" class="view active">
       <div class="view-head">
-        <h1>Decks</h1>
-        <button class="btn primary" id="newDeckBtn">+ New deck</button>
+        <h1>Recipes</h1>
+        <button class="btn primary" id="newDeckBtn">+ New recipe</button>
       </div>
-      <div id="deckGrid" class="deck-grid"></div>
-      <p id="libraryEmpty" class="empty hidden">No decks yet. Create one to get started.</p>
+      <div id="deckGrid" class="recipe-stack"></div>
+      <p id="libraryEmpty" class="empty hidden">No recipes yet. Create one to get started.</p>
     </section>
 
     <!-- ============================= EDITOR ============================== -->
     <section id="view-editor" class="view">
       <div class="view-head">
-        <button class="btn ghost" id="editorBack">← Decks</button>
+        <button class="btn ghost" id="editorBack">← Recipes</button>
         <input id="deckName" class="deck-name-input" />
         <div class="spacer"></div>
         <span id="saveState" class="save-state">saved</span>
@@ -86,9 +86,10 @@
     <!-- ============================ PRESENTER =========================== -->
     <section id="view-presenter" class="view presenter">
       <div class="view-head">
-        <button class="btn ghost" id="presenterBack">← Decks</button>
+        <button class="btn ghost" id="presenterBack">← Recipes</button>
         <h1 id="presenterDeckName"></h1>
         <div class="spacer"></div>
+        <select id="recipeSwitch" class="recipe-switch" title="Switch recipe"></select>
         <div id="statusPill" class="status-pill">—</div>
       </div>
 
