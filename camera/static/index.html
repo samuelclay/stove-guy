@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stove Guy — Virtual Camera</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" id="brandHome">
+      <span class="flame">◐</span> Stove&nbsp;Guy
+      <span class="sub">virtual presentation camera</span>
+    </div>
+    <div class="cam-status" id="camStatus" title="Virtual camera device status">
+      <span class="dot"></span><span class="label">camera…</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============================= LIBRARY ============================= -->
+    <section id="view-library" class="view active">
+      <div class="view-head">
+        <h1>Decks</h1>
+        <button class="btn primary" id="newDeckBtn">+ New deck</button>
+      </div>
+      <div id="deckGrid" class="deck-grid"></div>
+      <p id="libraryEmpty" class="empty hidden">No decks yet. Create one to get started.</p>
+    </section>
+
+    <!-- ============================= EDITOR ============================== -->
+    <section id="view-editor" class="view">
+      <div class="view-head">
+        <button class="btn ghost" id="editorBack">← Decks</button>
+        <input id="deckName" class="deck-name-input" />
+        <div class="spacer"></div>
+        <span id="saveState" class="save-state">saved</span>
+        <button class="btn primary" id="presentBtn">▶ Present</button>
+      </div>
+
+      <div class="editor-grid">
+        <aside class="settings card">
+          <h3>Defaults</h3>
+          <label>Default duration (s)
+            <input type="number" id="defDuration" min="0.1" step="0.5" />
+          </label>
+          <label>Default fit
+            <select id="defFit">
+              <option value="cover">Cover (fill + crop)</option>
+              <option value="contain">Contain (letterbox)</option>
+            </select>
+          </label>
+          <label>Crossfade (ms)
+            <input type="number" id="defFade" min="0" step="50" />
+          </label>
+          <label>Background
+            <input type="color" id="bgColor" />
+          </label>
+
+          <h3>Add images</h3>
+          <div id="dropZone" class="dropzone">
+            <p>Drop images here<br /><small>PNG · JPG · WebP · HEIC</small></p>
+            <input type="file" id="fileInput" accept="image/*,.heic,.heif" multiple hidden />
+            <button class="btn" id="browseBtn">Browse…</button>
+          </div>
+          <label class="path-add">Add from path / folder
+            <div class="row">
+              <input type="text" id="pathInput" placeholder="/Users/you/shots or /…/image.png" />
+              <button class="btn" id="pathBtn">Add</button>
+            </div>
+          </label>
+        </aside>
+
+        <div class="slides card">
+          <div class="slides-head">
+            <h3>Slides <span id="slideCount" class="muted"></span></h3>
+            <span class="muted small">drag to reorder</span>
+          </div>
+          <div id="slideList" class="slide-list"></div>
+          <p id="slidesEmpty" class="empty">No slides yet — add some images.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ PRESENTER =========================== -->
+    <section id="view-presenter" class="view presenter">
+      <div class="view-head">
+        <button class="btn ghost" id="presenterBack">← Decks</button>
+        <h1 id="presenterDeckName"></h1>
+        <div class="spacer"></div>
+        <div id="statusPill" class="status-pill">—</div>
+      </div>
+
+      <div class="stage">
+        <img id="previewImg" class="preview" alt="live camera output" />
+        <div id="manualOverlay" class="manual-overlay hidden">waiting for you →</div>
+      </div>
+
+      <div class="transport">
+        <button class="btn" data-act="prev" title="Previous (←)">◀</button>
+        <button class="btn big" data-act="toggle" id="playBtn" title="Play / Pause (Space)">▶</button>
+        <button class="btn" data-act="next" title="Next (→)">▶▶</button>
+        <button class="btn" data-act="replay" title="Replay timer (R)">↻</button>
+        <button class="btn" data-act="stop" title="Stop → standby (Esc)">⏹</button>
+        <div class="counter" id="counter">0 / 0</div>
+      </div>
+
+      <div id="filmstrip" class="filmstrip"></div>
+      <p class="hint muted small">Space/→ next · ← back · P pause · R replay · Esc stop · click a thumbnail to jump</p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
