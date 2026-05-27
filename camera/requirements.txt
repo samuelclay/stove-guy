@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pyvirtualcam
+numpy
+Pillow
+pillow-heif
+python-multipart
