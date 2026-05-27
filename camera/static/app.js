@@ -169,7 +169,7 @@ async function openEditor(deckId) {
   deck = await api("GET", deckPath(deckId));
   showView("editor");
   $("#deckName").value = deck.name;
-  $("#defDuration").value = deck.defaults.durationSec;
+  $("#defDuration").value = Math.round(deck.defaults.durationSec);
   $("#defFit").value = deck.defaults.fit;
   $("#defFade").value = deck.defaults.transition.durationMs;
   $("#bgColor").value = deck.background || "#000000";
@@ -210,7 +210,7 @@ async function saveNow() {
 
 // settings handlers
 $("#deckName").oninput = (e) => { deck.name = e.target.value; scheduleSave(); };
-$("#defDuration").onchange = (e) => { deck.defaults.durationSec = parseFloat(e.target.value) || 5; scheduleSave(); };
+$("#defDuration").onchange = (e) => { deck.defaults.durationSec = Math.round(parseFloat(e.target.value)) || 5; scheduleSave(); };
 $("#defFit").onchange = (e) => { deck.defaults.fit = e.target.value; scheduleSave(); };
 $("#defFade").onchange = (e) => { deck.defaults.transition.durationMs = parseInt(e.target.value) || 0; scheduleSave(); };
 $("#bgColor").onchange = (e) => { deck.background = e.target.value; scheduleSave(); };
@@ -251,8 +251,8 @@ function renderSlides() {
           <button data-m="auto" class="${isManual ? "" : "on"}">Auto</button>
           <button data-m="manual" class="${isManual ? "on" : ""}">Manual</button>
         </span>
-        <input type="number" class="dur-input ${isManual ? "hidden" : ""}" min="0.1" step="0.5"
-               value="${s.durationSec ?? deck.defaults.durationSec}" title="seconds" />
+        <input type="number" class="dur-input ${isManual ? "hidden" : ""}" min="1" step="1"
+               value="${Math.round(s.durationSec ?? deck.defaults.durationSec)}" title="seconds" />
         <select class="mini-select fit">
           <option value="">fit: default</option>
           <option value="cover">cover</option>
@@ -302,7 +302,7 @@ function renderSlides() {
     $(".lbl", row).oninput = (e) => { s.label = e.target.value; scheduleSave(); };
     $(".fit", row).onchange = (e) => { s.fit = e.target.value || null; scheduleSave(); };
     const durEl = $(".dur-input", row);
-    durEl.onchange = (e) => { s.durationSec = parseFloat(e.target.value) || deck.defaults.durationSec; scheduleSave(); };
+    durEl.onchange = (e) => { s.durationSec = Math.round(parseFloat(e.target.value)) || Math.round(deck.defaults.durationSec); scheduleSave(); };
     $$(".mode button", row).forEach((b) => {
       b.onclick = () => {
         s.mode = b.dataset.m;
@@ -463,13 +463,13 @@ function renderFilmTiming(film, s, i) {
     span.innerHTML = `<button class="film-mode" title="Switch to timed (auto)">MANUAL</button>`;
   } else {
     span.innerHTML =
-      `<input class="film-dur" type="number" min="0.1" step="0.5" value="${effDur(s)}" title="seconds" />` +
+      `<input class="film-dur" type="number" min="1" step="1" value="${Math.round(effDur(s))}" title="seconds" />` +
       `<span class="su">s</span>` +
       `<button class="film-mode" title="Switch to manual hold">✋</button>`;
   }
   $(".film-mode", span).onclick = () => saveTiming(s, i, { mode: s.mode === "manual" ? "auto" : "manual" });
   const durEl = $(".film-dur", span);
-  if (durEl) durEl.onchange = (e) => saveTiming(s, i, { durationSec: parseFloat(e.target.value) || effDur(s) });
+  if (durEl) durEl.onchange = (e) => saveTiming(s, i, { durationSec: Math.round(parseFloat(e.target.value)) || Math.round(effDur(s)) });
 }
 
 async function saveTiming(s, i, changes) {
