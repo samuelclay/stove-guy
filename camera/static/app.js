@@ -79,7 +79,7 @@ function connectWS() {
   ws.onmessage = (ev) => {
     const state = JSON.parse(ev.data);
     updateCamStatus(state.camera);
-    if (view === "presenter") updatePresenter(state.presentation);
+    if (view === "presenter") updatePresenter(state.presentation, state.tavus);
   };
   ws.onclose = () => setTimeout(connectWS, 1000);
   // keepalive
@@ -531,12 +531,13 @@ $("#mirrorHudBtn").onclick = () => present("mirrorhud");
 // reload returns you to the same mode.
 function setShowMode(on) {
   $("#view-presenter").classList.toggle("show", !!on);
+  $("#showToggle").textContent = on ? "Exit presentation" : "Presentation";
   try { localStorage.setItem("showMode", on ? "1" : "0"); } catch (e) {}
 }
 $("#showToggle").onclick = () => setShowMode(!$("#view-presenter").classList.contains("show"));
 $("#showAdvanceBtn").onclick = () => present("next");
 
-function updatePresenter(p) {
+function updatePresenter(p, tavus) {
   if (!p || p.deckId !== (presentDeck && presentDeck.id)) return;
 
   // status pill
@@ -563,8 +564,12 @@ function updatePresenter(p) {
   // manual overlay on the stage
   $("#manualOverlay").classList.toggle("hidden", !p.awaitingManual);
 
-  // show-mode button: label = upcoming manual action; countdown fill + pulse
-  $("#view-presenter").classList.toggle("awaiting", !!p.awaitingManual);
+  // show-mode button: label = upcoming manual action. Only show the action
+  // button (the .awaiting class) once the replica has finished talking — so
+  // it appears the moment you actually need to act, not while he's still
+  // mid-sentence.
+  const replicaSpeaking = !!(tavus && tavus.replicaSpeaking);
+  $("#view-presenter").classList.toggle("awaiting", !!p.awaitingManual && !replicaSpeaking);
   const labelEl = $("#showAdvanceBtn .show-advance-label");
   if (labelEl) labelEl.textContent = p.nextActionLabel || "Next";
   const sp = $("#showAdvanceProgress");

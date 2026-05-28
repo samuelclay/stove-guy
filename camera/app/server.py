@@ -30,7 +30,11 @@ _clients: set[WebSocket] = set()
 
 
 def full_state() -> dict:
-    return {"presentation": presentation.state(), "camera": engine.status()}
+    return {
+        "presentation": presentation.state(),
+        "camera": engine.status(),
+        "tavus": {"replicaSpeaking": bridge.replica_speaking()},
+    }
 
 
 async def broadcast() -> None:

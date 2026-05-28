@@ -284,22 +284,27 @@ main { padding: 22px; max-width: 1200px; margin: 0 auto; }
    and one big advance button with a slim countdown bar along its bottom. */
 .presenter { position: relative; }
 .show-toggle {
-  position: absolute; top: 14px; right: 18px; z-index: 20;
-  background: rgba(255,255,255,0.05); color: var(--muted);
-  border: 1px solid rgba(255,255,255,0.10);
-  width: 32px; height: 32px; line-height: 30px; text-align: center;
-  border-radius: 8px; cursor: pointer; font-size: 14px;
-  opacity: 0.45; transition: opacity .15s, background .15s;
+  background: var(--panel, #1f2127);
+  color: var(--text, #e5e7eb);
+  border: 1px solid var(--line, rgba(255,255,255,0.18));
+  padding: 7px 14px;
+  border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 500; letter-spacing: 0.2px;
+  transition: background .15s, border-color .15s;
 }
-.show-toggle:hover { opacity: 1; background: rgba(255,255,255,0.10); }
-.presenter.show .show-toggle { opacity: 0.35; }
+.show-toggle:hover {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.30);
+}
 
 .show-advance { display: none; }
-.presenter.show .view-head,
 .presenter.show .transport,
 .presenter.show #filmstrip,
 .presenter.show .hint,
 .presenter.show #manualOverlay { display: none !important; }
+/* keep the header bar visible in show mode, but only the toggle inside it */
+.presenter.show .view-head > *:not(#showToggle) { display: none !important; }
+.presenter.show .view-head { justify-content: flex-end; }
 .presenter.show .stage { margin-bottom: 14px; }
 
 .presenter.show .show-advance {
