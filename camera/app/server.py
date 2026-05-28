@@ -305,7 +305,7 @@ def _narration_text(ev: dict) -> str:
 
 _prev_tier: Optional[str] = None
 _silent_since_speak = 0
-CADENCE_N = 3   # speak at least once every Nth non-manual frame
+CADENCE_N = 2   # speak at least once every Nth non-manual frame
 
 
 def _on_narrate(ev: dict) -> None:
