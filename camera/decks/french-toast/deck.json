@@ -484,8 +484,34 @@
       "transition": null,
       "temperature": 880.0,
       "dip": null,
-      "cue": "It's over. The whole kitchen is gone. Well... I hope you learned your lesson.",
-      "action": "Call 911!"
+      "cue": "Use the fire extinguisher.",
+      "action": "Use fire extinguisher!"
+    },
+    {
+      "id": "french-toast-027",
+      "image": "images/027-fire-extinguisher-cloud.png",
+      "label": "Fire extinguisher cloud",
+      "mode": "auto",
+      "durationSec": 4.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 430.0,
+      "dip": null,
+      "cue": null,
+      "action": null
+    },
+    {
+      "id": "french-toast-028",
+      "image": "images/028-charred-remains.png",
+      "label": "Charred remains",
+      "mode": "manual",
+      "durationSec": null,
+      "fit": null,
+      "transition": null,
+      "temperature": 160.0,
+      "dip": null,
+      "cue": "The fire is out. Breakfast is not salvageable.",
+      "action": "Done"
     }
   ]
 }
