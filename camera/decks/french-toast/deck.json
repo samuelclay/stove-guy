@@ -185,7 +185,7 @@
       "transition": null,
       "temperature": 300.0,
       "dip": null,
-      "cue": "It's perfect. Now — ruin it.",
+      "cue": "Dust the toast with powdered sugar.",
       "action": "Add powdered sugar"
     },
     {
@@ -198,7 +198,7 @@
       "transition": null,
       "temperature": 295.0,
       "dip": null,
-      "cue": null,
+      "cue": "Drizzle the maple syrup over the toast.",
       "action": "Drizzle maple syrup"
     },
     {
@@ -211,7 +211,7 @@
       "transition": null,
       "temperature": 290.0,
       "dip": null,
-      "cue": null,
+      "cue": "Pile on the whipped cream.",
       "action": "Add whipped cream"
     },
     {
@@ -224,7 +224,7 @@
       "transition": null,
       "temperature": 280.0,
       "dip": 20.0,
-      "cue": null,
+      "cue": "Scatter chocolate chips across the top.",
       "action": "Add chocolate chips"
     },
     {
@@ -237,7 +237,7 @@
       "transition": null,
       "temperature": 285.0,
       "dip": null,
-      "cue": null,
+      "cue": "Sprinkle on the pickle chips.",
       "action": "Add pickle chips"
     },
     {
