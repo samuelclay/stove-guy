@@ -420,6 +420,7 @@ async function openPresenter(deckId, startIndex = 0) {
   await api("POST", "/api/present/load", { deckId });
   showView("presenter");
   setUrl("presenter", deckId, startIndex);
+  setShowMode(localStorage.getItem("showMode") === "1");
   $("#presenterDeckName").textContent = presentDeck.name;
   lastIndex = -1;
   renderFilmstrip();
@@ -525,6 +526,16 @@ $$("#view-presenter .transport [data-act]").forEach((b) => {
 $("#mirrorBtn").onclick = () => present("mirror");
 $("#mirrorHudBtn").onclick = () => present("mirrorhud");
 
+// presentation (show) mode — collapses the timeline + transport to one big
+// "Advance" button with a slim countdown bar. Persists in localStorage so
+// reload returns you to the same mode.
+function setShowMode(on) {
+  $("#view-presenter").classList.toggle("show", !!on);
+  try { localStorage.setItem("showMode", on ? "1" : "0"); } catch (e) {}
+}
+$("#showToggle").onclick = () => setShowMode(!$("#view-presenter").classList.contains("show"));
+$("#showAdvanceBtn").onclick = () => present("next");
+
 function updatePresenter(p) {
   if (!p || p.deckId !== (presentDeck && presentDeck.id)) return;
 
@@ -551,6 +562,16 @@ function updatePresenter(p) {
 
   // manual overlay on the stage
   $("#manualOverlay").classList.toggle("hidden", !p.awaitingManual);
+
+  // show-mode big button: countdown fill + manual pulse
+  $("#view-presenter").classList.toggle("awaiting", !!p.awaitingManual);
+  const sp = $("#showAdvanceProgress");
+  if (sp) {
+    if (p.awaitingManual) sp.style.width = "100%";
+    else if (p.duration && p.remaining != null)
+      sp.style.width = `${Math.max(0, Math.min(100, (1 - p.remaining / p.duration) * 100))}%`;
+    else sp.style.width = "0%";
+  }
 
   // filmstrip cursor + progress
   $$("#filmstrip .film").forEach((film) => {
@@ -588,6 +609,11 @@ document.addEventListener("keydown", (e) => {
     p: "toggle", P: "toggle", r: "replay", R: "replay",
   };
   if (e.key === "Escape") { e.preventDefault(); return present("stop"); }
+  if (e.key === "s" || e.key === "S") {
+    e.preventDefault();
+    setShowMode(!$("#view-presenter").classList.contains("show"));
+    return;
+  }
   const act = map[e.key];
   if (act) { e.preventDefault(); present(act); }
 });

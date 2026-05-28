@@ -278,3 +278,58 @@ main { padding: 22px; max-width: 1200px; margin: 0 auto; }
 .film .cap-row.thermo { justify-content: flex-start; gap: 4px; }
 .thermo-ico { color: var(--accent); font-size: 12px; }
 .film-temp { width: 50px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 2px 4px; font-size: 11px; font-variant-numeric: tabular-nums; }
+
+/* ---- Presentation (Show) mode ------------------------------------------- */
+/* A subtle toggle stays visible; everything else collapses to just the stage
+   and one big advance button with a slim countdown bar along its bottom. */
+.presenter { position: relative; }
+.show-toggle {
+  position: absolute; top: 14px; right: 18px; z-index: 20;
+  background: rgba(255,255,255,0.05); color: var(--muted);
+  border: 1px solid rgba(255,255,255,0.10);
+  width: 32px; height: 32px; line-height: 30px; text-align: center;
+  border-radius: 8px; cursor: pointer; font-size: 14px;
+  opacity: 0.45; transition: opacity .15s, background .15s;
+}
+.show-toggle:hover { opacity: 1; background: rgba(255,255,255,0.10); }
+.presenter.show .show-toggle { opacity: 0.35; }
+
+.show-advance { display: none; }
+.presenter.show .view-head,
+.presenter.show .transport,
+.presenter.show #filmstrip,
+.presenter.show .hint,
+.presenter.show #manualOverlay { display: none !important; }
+.presenter.show .stage { margin-bottom: 14px; }
+
+.presenter.show .show-advance {
+  display: flex; flex-direction: column; align-items: stretch;
+  margin: 0 auto; max-width: 760px; width: 92%;
+  background: linear-gradient(180deg, #ff8a5c 0%, #e65a30 100%);
+  color: #fff; border: 0; border-radius: 14px;
+  padding: 26px 30px 0; cursor: pointer;
+  font-weight: 700; font-size: 28px; letter-spacing: 0.5px;
+  box-shadow: 0 6px 22px rgba(255,122,77,0.28);
+  user-select: none;
+}
+.presenter.show .show-advance:hover { filter: brightness(1.06); }
+.presenter.show .show-advance:active { transform: translateY(1px); }
+.presenter.show .show-advance .show-advance-label { padding: 4px 0 18px; text-align: center; }
+.presenter.show .show-advance .show-advance-progress {
+  display: block; height: 8px; background: rgba(0,0,0,0.28);
+  border-radius: 0 0 14px 14px; overflow: hidden; margin: 0 -30px;
+}
+.presenter.show .show-advance .show-advance-progress i {
+  display: block; height: 100%; width: 0%;
+  background: rgba(255,255,255,0.92);
+  transition: width .15s linear;
+}
+
+/* Manual gate: pulse the button so it reads "act now" */
+.presenter.show.awaiting .show-advance {
+  animation: showPulse 1.3s ease-in-out infinite;
+}
+@keyframes showPulse {
+  0%, 100% { box-shadow: 0 6px 22px rgba(255,122,77,0.28); }
+  50%      { box-shadow: 0 6px 38px rgba(255,140,90,0.65); }
+}
