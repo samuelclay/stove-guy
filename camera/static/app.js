@@ -416,9 +416,13 @@ let presentDeck = null;     // deck with slides, for filmstrip
 let lastIndex = -1;
 
 // show-mode "advance button reveal" state: hold the button hidden until the
-// replica has actually spoken (and finished) WHILE we're at this gate.
+// replica has STARTED a fresh utterance at this gate (false→true rising edge
+// after arrival) and finished it. A speech that's already in flight when we
+// arrive (carry-over from the previous frame) doesn't count.
 let _gateIndex = -1;
-let _heardSpeakingAtGate = false;
+let _gateSawRising = false;        // saw false→true while at this gate
+let _heardSpeakingAtGate = false;  // ...AND then it stopped
+let _prevSpeaking = false;
 let _gateTimer = null;
 
 async function openPresenter(deckId, startIndex = 0) {
@@ -570,30 +574,38 @@ function updatePresenter(p, tavus) {
   // manual overlay on the stage
   $("#manualOverlay").classList.toggle("hidden", !p.awaitingManual);
 
-  // show-mode button: label = upcoming manual action. The button must NOT
-  // appear during the gap between arriving at the gate and the replica
-  // starting to talk. We require the replica to *actually speak* while we are
-  // at this gate (rising edge of `replicaSpeaking` since arrival) before we
-  // consider revealing it on the next stop. A 6s fallback covers the case
-  // where the replica never speaks at all, so the operator can still advance.
+  // show-mode button: label = upcoming manual action. Don't reveal the button
+  // until the replica has both STARTED (false→true) and STOPPED a fresh
+  // utterance AT this gate — so a tail-end utterance from the previous frame
+  // can't trigger a momentary reveal. A 6s fallback covers the case where the
+  // replica never speaks at all, so the operator can still advance.
   const replicaSpeaking = !!(tavus && tavus.replicaSpeaking);
   if (p.awaitingManual) {
     if (p.index !== _gateIndex) {
       _gateIndex = p.index;
+      _gateSawRising = false;
       _heardSpeakingAtGate = false;
       clearTimeout(_gateTimer);
       _gateTimer = setTimeout(() => { _heardSpeakingAtGate = true; }, 6000);
-    }
-    if (replicaSpeaking) {
-      _heardSpeakingAtGate = true;
-      clearTimeout(_gateTimer);
+    } else {
+      // rising edge (a NEW utterance) while at this gate
+      if (!_prevSpeaking && replicaSpeaking) {
+        _gateSawRising = true;
+        clearTimeout(_gateTimer);
+      }
+      // falling edge AFTER we already saw a rising edge at this gate
+      if (_gateSawRising && _prevSpeaking && !replicaSpeaking) {
+        _heardSpeakingAtGate = true;
+      }
     }
   } else if (_gateIndex !== -1) {
     _gateIndex = -1;
+    _gateSawRising = false;
     _heardSpeakingAtGate = false;
     clearTimeout(_gateTimer);
     _gateTimer = null;
   }
+  _prevSpeaking = replicaSpeaking;
   $("#view-presenter").classList.toggle(
     "awaiting",
     !!p.awaitingManual && _heardSpeakingAtGate && !replicaSpeaking,
