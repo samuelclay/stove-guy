@@ -15,7 +15,7 @@
     "unit": "F",
     "coldThreshold": 250.0,
     "burnThreshold": 350.0,
-    "coldLabel": "Too cold \u2014 wait for the oil to heat",
+    "coldLabel": "Too cold — wait for the oil to heat",
     "burnLabel": "You're burning the omelet above this!",
     "minTemp": 60.0,
     "maxTemp": 500.0,
@@ -42,7 +42,8 @@
       "transition": null,
       "temperature": 70.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": "Start"
     },
     {
       "id": "omelette-002",
@@ -78,7 +79,8 @@
       "transition": null,
       "temperature": 300.0,
       "dip": null,
-      "cue": "Your pan's hot now \u2014 pour your beaten eggs straight into the middle."
+      "cue": "Your pan's hot now — pour your beaten eggs straight into the middle.",
+      "action": "Pour eggs"
     },
     {
       "id": "omelette-005",
@@ -114,7 +116,7 @@
       "transition": null,
       "temperature": 290.0,
       "dip": null,
-      "cue": "The eggs are mostly set \u2014 flip the omelette now."
+      "cue": "The eggs are mostly set — flip the omelette now."
     },
     {
       "id": "omelette-008",
@@ -126,7 +128,8 @@
       "transition": null,
       "temperature": 300.0,
       "dip": null,
-      "cue": "Nice flip. Now scatter your veggies over one half."
+      "cue": "Nice flip. Now scatter your veggies over one half.",
+      "action": "Add veggies"
     },
     {
       "id": "omelette-009",
@@ -150,7 +153,8 @@
       "transition": null,
       "temperature": 260.0,
       "dip": null,
-      "cue": "Veggies are softening \u2014 add your cheese on top now."
+      "cue": "Veggies are softening — add your cheese on top now.",
+      "action": "Add cheese"
     },
     {
       "id": "omelette-011",
@@ -174,7 +178,8 @@
       "transition": null,
       "temperature": 310.0,
       "dip": null,
-      "cue": "Cheese is melted \u2014 fold the omelette closed now."
+      "cue": "Cheese is melted — fold the omelette closed now.",
+      "action": "Fold closed"
     },
     {
       "id": "omelette-013",
@@ -402,7 +407,8 @@
       "transition": null,
       "temperature": 875.0,
       "dip": null,
-      "cue": "The stove is on fire."
+      "cue": "The stove is on fire.",
+      "action": "Call 911!"
     }
   ]
 }

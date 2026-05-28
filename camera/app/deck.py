@@ -60,6 +60,7 @@ class Slide(BaseModel):
     temperature: Optional[float] = None          # IR-thermometer target temp for this frame
     dip: Optional[float] = None                  # deg the reading drops on entry, then recovers
     cue: Optional[str] = None                    # coaching line handed to the Tavus persona at a manual gate
+    action: Optional[str] = None                 # short verb shown on the show-mode advance button (e.g. "Pour eggs", "Flip")
 
 
 class Defaults(BaseModel):

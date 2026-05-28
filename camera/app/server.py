@@ -277,10 +277,13 @@ STOVE_DECK_ID = "omelette"
 bridge = tavus_bridge.ConversationBridge()
 
 
-# Real flames only at the very top. The deck labels the actual fire frames
-# ("Small fire" 735°F → "Stove on fire" 875°F); everything from the burn point
-# up to here is charring/burning, NOT fire.
+# Tiered escalation:
+#   burning  (>= burnThreshold) → urgent "pull it off"
+#   fire     (>= 730°F or "fire" in label) → hilarious panic, smother with a lid
+#   inferno  (>= 800°F or "engulf"/"stove on fire" in label) → DEAD SERIOUS:
+#            call 911, run for your life. No jokes.
 FIRE_F = 730.0
+INFERNO_F = 800.0
 START_LINE = "Let's get cooking!"
 _prev_status: Optional[str] = None
 
@@ -291,7 +294,13 @@ def _narration_text(ev: dict) -> str:
     target = ev.get("target")      # stage target — used ONLY to classify burn/fire
     tpart = f", about {temp}°F" if temp is not None else ""
     lname = label.lower()
-    is_fire = ("fire" in lname) or ("engulf" in lname) or (target is not None and target >= FIRE_F)
+    is_inferno = ("engulf" in lname) or ("stove on fire" in lname) or (target is not None and target >= INFERNO_F)
+    is_fire = (not is_inferno) and (("fire" in lname) or (target is not None and target >= FIRE_F))
+    if is_inferno:
+        return (
+            f"[Stovetop camera] {label}{tpart} — THE WHOLE STOVE IS ENGULFED, "
+            "the kitchen is going up in flames — call 911 and run for your life!"
+        )
     if is_fire:
         return f"[Stovetop camera] {label}{tpart} — there are real FLAMES in the pan, it's on FIRE!"
     if ev.get("is_burning"):
@@ -335,12 +344,21 @@ def _on_narrate(ev: dict) -> None:
 
     label = (ev.get("label") or "").lower()
     target = ev.get("target")
-    is_fire = ("fire" in label) or ("engulf" in label) or (target is not None and target >= FIRE_F)
-    is_burn = bool(ev.get("is_burning")) and not is_fire
+    is_inferno = ("engulf" in label) or ("stove on fire" in label) or (target is not None and target >= INFERNO_F)
+    is_fire = (not is_inferno) and (("fire" in label) or (target is not None and target >= FIRE_F))
+    is_burn = (not is_inferno and not is_fire) and bool(ev.get("is_burning"))
     is_gate = bool(ev.get("is_gate"))
-    tier = "fire" if is_fire else ("burning" if is_burn else ("gate" if is_gate else "normal"))
+    if is_inferno: tier = "inferno"
+    elif is_fire: tier = "fire"
+    elif is_burn: tier = "burning"
+    elif is_gate: tier = "gate"
+    else: tier = "normal"
 
-    tier_entry = (is_fire and _prev_tier != "fire") or (is_burn and _prev_tier != "burning")
+    tier_entry = (
+        (is_inferno and _prev_tier != "inferno") or
+        (is_fire and _prev_tier != "fire") or
+        (is_burn and _prev_tier != "burning")
+    )
     if is_gate or tier_entry:
         speak = True
     else:

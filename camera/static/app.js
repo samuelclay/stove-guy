@@ -563,8 +563,10 @@ function updatePresenter(p) {
   // manual overlay on the stage
   $("#manualOverlay").classList.toggle("hidden", !p.awaitingManual);
 
-  // show-mode big button: countdown fill + manual pulse
+  // show-mode button: label = upcoming manual action; countdown fill + pulse
   $("#view-presenter").classList.toggle("awaiting", !!p.awaitingManual);
+  const labelEl = $("#showAdvanceBtn .show-advance-label");
+  if (labelEl) labelEl.textContent = p.nextActionLabel || "Next";
   const sp = $("#showAdvanceProgress");
   if (sp) {
     if (p.awaitingManual) sp.style.width = "100%";

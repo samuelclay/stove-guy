@@ -367,6 +367,16 @@ class Presentation:
                 if (self.deck and slide is not None and slide.mode == "auto")
                 else None
             )
+            # The action label shown on the show-mode button: whichever manual
+            # slide is at-or-ahead of the current position. Falls back to the
+            # label if the slide has no `action` field.
+            next_action = None
+            if self.deck and self._slides:
+                start = self.index if (slide is not None and slide.mode == "manual") else self.index + 1
+                for s in self._slides[start:]:
+                    if s.mode == "manual":
+                        next_action = s.action or s.label or None
+                        break
             return {
                 "status": self.status,
                 "deckId": self.deck.id if self.deck else None,
@@ -385,4 +395,5 @@ class Presentation:
                 "temp": round(self.temp.display) if (self.temp.enabled and self.temp.display is not None) else None,
                 "tempZone": self.temp.zone() if self.temp.enabled else None,
                 "tempTarget": round(slide.temperature) if (slide and slide.temperature is not None) else None,
+                "nextActionLabel": next_action,
             }
