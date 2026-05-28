@@ -18,7 +18,7 @@
     "coldLabel": "Too cold \u2014 wait for the oil to heat",
     "burnLabel": "You're burning the omelet above this!",
     "minTemp": 60.0,
-    "maxTemp": 480.0
+    "maxTemp": 900.0
   },
   "defaults": {
     "durationSec": 4.0,
@@ -231,12 +231,145 @@
       "id": "omelette-019",
       "image": "images/019-crispy-overdone.png",
       "label": "Crispy overdone",
-      "mode": "manual",
-      "durationSec": null,
+      "mode": "auto",
+      "durationSec": 6.0,
       "fit": null,
       "transition": null,
       "temperature": 465.0,
       "dip": null
+    },
+    {
+      "id": "omelette-020",
+      "image": "images/020-extra-crispy.png",
+      "label": "Extra crispy",
+      "mode": "auto",
+      "durationSec": 6.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 495.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-021",
+      "image": "images/021-very-crispy.png",
+      "label": "Very crispy",
+      "mode": "auto",
+      "durationSec": 6.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 525.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-022",
+      "image": "images/022-crispiest-overdone.png",
+      "label": "Crispiest overdone",
+      "mode": "auto",
+      "durationSec": 6.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 555.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-023",
+      "image": "images/023-burnt.png",
+      "label": "Burnt",
+      "mode": "auto",
+      "durationSec": 6.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 585.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-024",
+      "image": "images/024-more-burnt.png",
+      "label": "More burnt",
+      "mode": "auto",
+      "durationSec": 6.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 615.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-025",
+      "image": "images/025-heavily-burnt.png",
+      "label": "Heavily burnt",
+      "mode": "auto",
+      "durationSec": 6.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 645.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-026",
+      "image": "images/026-almost-fully-burnt.png",
+      "label": "Almost fully burnt",
+      "mode": "auto",
+      "durationSec": 6.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 675.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-027",
+      "image": "images/027-fully-burnt.png",
+      "label": "Fully burnt",
+      "mode": "auto",
+      "durationSec": 6.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 705.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-028",
+      "image": "images/028-small-fire.png",
+      "label": "Small fire",
+      "mode": "auto",
+      "durationSec": 5.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 735.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-029",
+      "image": "images/029-fire-building.png",
+      "label": "Fire building",
+      "mode": "auto",
+      "durationSec": 5.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 770.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-030",
+      "image": "images/030-omelette-engulfed.png",
+      "label": "Omelette engulfed",
+      "mode": "auto",
+      "durationSec": 5.0,
+      "fit": null,
+      "transition": null,
+      "temperature": 815.0,
+      "dip": null
+    },
+    {
+      "id": "omelette-031",
+      "image": "images/031-stove-on-fire.png",
+      "label": "Stove on fire",
+      "mode": "manual",
+      "durationSec": null,
+      "fit": null,
+      "transition": null,
+      "temperature": 875.0,
+      "dip": null,
+      "cue": "The stove is on fire."
     }
   ]
 }
