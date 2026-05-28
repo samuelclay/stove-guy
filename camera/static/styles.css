@@ -321,6 +321,12 @@ main { padding: 22px; max-width: 1200px; margin: 0 auto; }
 }
 .presenter.show .show-advance:active { transform: translateY(1px); }
 .presenter.show .show-advance .show-advance-label { padding: 2px 0 9px; text-align: center; }
+
+/* Between gates: hide the label entirely; the button shrinks to just the slim
+   countdown strip so you can still see time ticking without "Advance" staring
+   at you. The label/pulse comes back the moment you're on a manual gate. */
+.presenter.show:not(.awaiting) .show-advance .show-advance-label { display: none; }
+.presenter.show:not(.awaiting) .show-advance { padding: 4px 22px 0; }
 .presenter.show .show-advance .show-advance-progress {
   display: block; height: 3px; background: rgba(255,255,255,0.08);
   border-radius: 0 0 10px 10px; overflow: hidden; margin: 0 -22px;
