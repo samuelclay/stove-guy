@@ -322,11 +322,12 @@ main { padding: 22px; max-width: 1200px; margin: 0 auto; }
 .presenter.show .show-advance:active { transform: translateY(1px); }
 .presenter.show .show-advance .show-advance-label { padding: 2px 0 9px; text-align: center; }
 
-/* Between gates: hide the label entirely; the button shrinks to just the slim
-   countdown strip so you can still see time ticking without "Advance" staring
-   at you. The label/pulse comes back the moment you're on a manual gate. */
-.presenter.show:not(.awaiting) .show-advance .show-advance-label { display: none; }
-.presenter.show:not(.awaiting) .show-advance { padding: 4px 22px 0; }
+/* Between gates: hide the entire button. It (re)appears the instant the deck
+   lands on a manual gate AND the replica has finished talking (the speaking
+   gate holds the advance until then). The progress bar isn't a meaningful
+   timer with that gating, so we drop it. */
+.presenter.show:not(.awaiting) .show-advance { display: none !important; }
+.presenter.show .show-advance .show-advance-progress { display: none !important; }
 .presenter.show .show-advance .show-advance-progress {
   display: block; height: 3px; background: rgba(255,255,255,0.08);
   border-radius: 0 0 10px 10px; overflow: hidden; margin: 0 -22px;
