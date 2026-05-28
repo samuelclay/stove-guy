@@ -8,14 +8,14 @@
     "fps": 30
   },
   "background": "#000000",
-  "mirror": true,
-  "mirrorHud": true,
+  "mirror": false,
+  "mirrorHud": false,
   "thermal": {
     "enabled": true,
     "unit": "F",
     "coldThreshold": 250.0,
     "burnThreshold": 350.0,
-    "coldLabel": "Too cold — wait for the oil to heat",
+    "coldLabel": "Too cold \u2014 wait for the oil to heat",
     "burnLabel": "You're burning the omelet above this!",
     "minTemp": 60.0,
     "maxTemp": 500.0,
@@ -55,7 +55,8 @@
       "transition": null,
       "temperature": 150.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-003",
@@ -67,7 +68,8 @@
       "transition": null,
       "temperature": 230.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-004",
@@ -79,7 +81,7 @@
       "transition": null,
       "temperature": 300.0,
       "dip": null,
-      "cue": "Your pan's hot now — pour your beaten eggs straight into the middle.",
+      "cue": "Your pan's hot now \u2014 pour your beaten eggs straight into the middle.",
       "action": "Pour eggs"
     },
     {
@@ -92,7 +94,8 @@
       "transition": null,
       "temperature": 255.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-006",
@@ -104,7 +107,8 @@
       "transition": null,
       "temperature": 275.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-007",
@@ -116,7 +120,8 @@
       "transition": null,
       "temperature": 290.0,
       "dip": null,
-      "cue": "The eggs are mostly set — flip the omelette now."
+      "cue": "The eggs are mostly set \u2014 flip the omelette now.",
+      "action": null
     },
     {
       "id": "omelette-008",
@@ -141,7 +146,8 @@
       "transition": null,
       "temperature": 200.0,
       "dip": 40.0,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-010",
@@ -153,7 +159,7 @@
       "transition": null,
       "temperature": 260.0,
       "dip": null,
-      "cue": "Veggies are softening — add your cheese on top now.",
+      "cue": "Veggies are softening \u2014 add your cheese on top now.",
       "action": "Add cheese"
     },
     {
@@ -166,7 +172,8 @@
       "transition": null,
       "temperature": 305.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-012",
@@ -178,7 +185,7 @@
       "transition": null,
       "temperature": 310.0,
       "dip": null,
-      "cue": "Cheese is melted — fold the omelette closed now.",
+      "cue": "Cheese is melted \u2014 fold the omelette closed now.",
       "action": "Fold closed"
     },
     {
@@ -191,7 +198,8 @@
       "transition": null,
       "temperature": 315.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-014",
@@ -203,7 +211,8 @@
       "transition": null,
       "temperature": 325.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-015",
@@ -215,7 +224,8 @@
       "transition": null,
       "temperature": 335.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-016",
@@ -227,7 +237,8 @@
       "transition": null,
       "temperature": 365.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-017",
@@ -239,7 +250,8 @@
       "transition": null,
       "temperature": 395.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-018",
@@ -251,7 +263,8 @@
       "transition": null,
       "temperature": 425.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-019",
@@ -263,7 +276,8 @@
       "transition": null,
       "temperature": 465.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-020",
@@ -275,7 +289,8 @@
       "transition": null,
       "temperature": 495.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-021",
@@ -287,7 +302,8 @@
       "transition": null,
       "temperature": 525.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-022",
@@ -299,7 +315,8 @@
       "transition": null,
       "temperature": 555.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-023",
@@ -311,7 +328,8 @@
       "transition": null,
       "temperature": 585.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-024",
@@ -323,7 +341,8 @@
       "transition": null,
       "temperature": 615.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-025",
@@ -335,7 +354,8 @@
       "transition": null,
       "temperature": 645.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-026",
@@ -347,7 +367,8 @@
       "transition": null,
       "temperature": 675.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-027",
@@ -359,7 +380,8 @@
       "transition": null,
       "temperature": 705.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-028",
@@ -371,7 +393,8 @@
       "transition": null,
       "temperature": 735.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-029",
@@ -383,7 +406,8 @@
       "transition": null,
       "temperature": 770.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-030",
@@ -395,7 +419,8 @@
       "transition": null,
       "temperature": 815.0,
       "dip": null,
-      "cue": null
+      "cue": null,
+      "action": null
     },
     {
       "id": "omelette-031",
