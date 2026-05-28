@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "french-toast",
-  "name": "French Toast \u2014 Director's Cut",
+  "name": "French Toast — Director's Cut",
   "output": {
     "width": 1920,
     "height": 1080,
@@ -15,7 +15,7 @@
     "unit": "F",
     "coldThreshold": 250.0,
     "burnThreshold": 350.0,
-    "coldLabel": "Too cold \u2014 the bread'll get soggy",
+    "coldLabel": "Too cold — the bread'll get soggy",
     "burnLabel": "Sugar starts to char above this",
     "minTemp": 60.0,
     "maxTemp": 500.0,
@@ -42,8 +42,8 @@
       "transition": null,
       "temperature": 70.0,
       "dip": null,
-      "cue": null,
-      "action": "Start"
+      "cue": "Turn the burner on and get the pan heating.",
+      "action": "Turn on stove"
     },
     {
       "id": "french-toast-002",
@@ -81,7 +81,7 @@
       "transition": null,
       "temperature": 290.0,
       "dip": null,
-      "cue": "Butter's foaming \u2014 slide in your first slice.",
+      "cue": "Butter's foaming — slide in your first slice.",
       "action": "Drop 1st slice"
     },
     {
@@ -133,7 +133,7 @@
       "transition": null,
       "temperature": 295.0,
       "dip": null,
-      "cue": "Edges are gold \u2014 flip the first one.",
+      "cue": "Edges are gold — flip the first one.",
       "action": "Flip 1st slice"
     },
     {
