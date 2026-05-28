@@ -1,0 +1,27 @@
+{
+  "name": "advance_stove",
+  "description": "Advance the on-camera cooking guide to the next step. Call this exactly ONCE each time the cook has finished the current hands-on action: after they pour the eggs, flip the omelette, add the vegetables, add the cheese, or fold it closed. It is safe to call when nothing needs advancing — it will simply report the current state without skipping ahead. The result tells you what is now on screen, the pan temperature, the next action the cook should take, and roughly how many seconds until they should do it (next_action_in_seconds) so you can pace yourself.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "reason": {
+        "type": "string",
+        "description": "A short note on what the cook just did or why you're advancing, e.g. 'eggs poured', 'omelette flipped', 'cheese added'."
+      }
+    },
+    "required": ["reason"]
+  },
+  "delivery": {
+    "api": {
+      "url": "https://size-promote-treasury-roll.trycloudflare.com/api/tavus/advance",
+      "method": "POST",
+      "content_type": "application/json",
+      "body_template": { "reason": "{reason}" },
+      "timeout": 10.0
+    }
+  },
+  "origin": "llm",
+  "on_call": "silent",
+  "on_resolve": "generate_response",
+  "tags": ["stove-guy"]
+}

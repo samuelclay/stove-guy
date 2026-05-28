@@ -39,6 +39,9 @@ class TemperatureModel:
         self.burn_label = "Burning above this"
         self.tmin: float | None = None
         self.tmax: float | None = None
+        self.stove: float | None = None       # burner setting (fixed)
+        self.stove_min: float = 150.0
+        self.stove_max: float = 550.0
 
         self.base: float | None = None       # smooth interpolated trend
         self.display: float | None = None     # base + jitter (what's shown)
@@ -64,6 +67,9 @@ class TemperatureModel:
         self.burn_label = thermal.burnLabel
         self.tmin = thermal.minTemp
         self.tmax = thermal.maxTemp
+        self.stove = getattr(thermal, "stoveTemp", None)
+        self.stove_min = getattr(thermal, "stoveMin", 150.0)
+        self.stove_max = getattr(thermal, "stoveMax", 550.0)
 
     def reset(self, target: float | None) -> None:
         self.history.clear()
@@ -152,4 +158,7 @@ class TemperatureModel:
             "tmax": self.tmax,
             "zone": self.zone(),
             "history": list(self.history),
+            "stove": self.stove,
+            "stoveMin": self.stove_min,
+            "stoveMax": self.stove_max,
         }

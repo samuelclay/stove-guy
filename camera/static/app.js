@@ -43,6 +43,31 @@ function showView(name) {
   $$(".view").forEach((v) => v.classList.remove("active"));
   $(`#view-${name}`).classList.add("active");
   if (name !== "presenter") stopPreview();
+  if (name === "library") setUrl("library");
+}
+
+// --------------------------------------------------------------------------
+// URL state: encode deck + frame in the hash so a reload returns to the same
+// place. replaceState (not pushState) so we don't pile up history entries.
+// --------------------------------------------------------------------------
+function setUrl(name, deckId, frame) {
+  let hash = "#/library";
+  if (name === "editor" && deckId) hash = `#/edit/${encodeURIComponent(deckId)}`;
+  else if (name === "presenter" && deckId) hash = `#/present/${encodeURIComponent(deckId)}` + (frame ? `/${frame}` : "");
+  if (location.hash !== hash) history.replaceState(null, "", hash);
+}
+
+async function restoreFromUrl() {
+  const m = (location.hash || "").match(/^#\/(present|edit)\/([^/]+)(?:\/(\d+))?/);
+  if (m) {
+    const deckId = decodeURIComponent(m[2]);
+    try {
+      if (m[1] === "present") { await openPresenter(deckId, m[3] ? parseInt(m[3], 10) : 0); return; }
+      if (m[1] === "edit") { await openEditor(deckId); return; }
+    } catch (e) { /* deck gone or failed — fall back to the library */ }
+  }
+  showView("library");
+  loadLibrary();
 }
 
 // --------------------------------------------------------------------------
@@ -185,6 +210,7 @@ async function openEditor(deckId) {
   $("#thMin").value = th.minTemp ?? "";
   $("#thMax").value = th.maxTemp ?? "";
   renderSlides();
+  setUrl("editor", deckId);
 }
 
 function setSaveState(s) {
@@ -393,6 +419,7 @@ async function openPresenter(deckId, startIndex = 0) {
   presentDeck = await api("GET", deckPath(deckId));
   await api("POST", "/api/present/load", { deckId });
   showView("presenter");
+  setUrl("presenter", deckId, startIndex);
   $("#presenterDeckName").textContent = presentDeck.name;
   lastIndex = -1;
   renderFilmstrip();
@@ -541,6 +568,7 @@ function updatePresenter(p) {
   // keep the live thumbnail in view
   if (p.index !== lastIndex) {
     lastIndex = p.index;
+    setUrl("presenter", presentDeck.id, p.index);
     const live = $(`#filmstrip .film[data-idx="${p.index}"]`);
     if (live) live.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }
@@ -568,4 +596,4 @@ document.addEventListener("keydown", (e) => {
 // boot
 // --------------------------------------------------------------------------
 connectWS();
-loadLibrary();
+restoreFromUrl();

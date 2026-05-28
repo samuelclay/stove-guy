@@ -19,6 +19,7 @@ camera/
     camera_engine.py    # 30fps pyvirtualcam pump thread + crossfade + preview buffer
     presentation.py     # state machine: timers, manual holds, pause/advance/back
     server.py           # FastAPI: REST + /ws + MJPEG preview + static UI
+    traffic_log.py      # ANSI-colored request/response logging for /api/*
   static/               # index.html, styles.css, app.js (single-page UI)
   decks/<id>/           # deck.json + images/ + thumbs/   (one folder per deck)
   smoke_test.py         # Phase 0: verify pyvirtualcam can drive the OBS device
@@ -58,6 +59,37 @@ camera/
 camera/run.sh          # creates the venv on first run, then serves the app
 ```
 Open **http://127.0.0.1:8000**. In your call app, select **OBS Virtual Camera**.
+
+Or use the Makefile from the repo root, which starts the server **logging to a
+file** and tails it:
+
+```bash
+make            # start server -> camera/server.log, then tail -f it
+make logs       # tail the log of an already-running server
+make stop       # stop the server
+```
+
+## Logs (`camera/server.log`)
+
+`make` redirects the server's stdout/stderr to **`camera/server.log`**. Alongside
+uvicorn's access lines, every `/api/*` call is logged with **ANSI color** so you
+can see what's coming and going:
+
+- `→ POST /api/tavus/advance` — method-colored arrow + path, then the **request
+  body** (pretty-printed JSON, dimmed).
+- `← 200 /api/tavus/advance 45ms` — status colored by class (2xx green, 4xx
+  yellow, 5xx red) + elapsed time, then the **response body**.
+
+The MJPEG stream (`/api/preview`) and the `/ws` WebSocket are skipped (they never
+end); image/file responses show only their status line; bodies over 2000 chars
+are truncated. Set `STOVE_TRAFFIC_LOG=0` to disable.
+
+```bash
+tail -f camera/server.log          # follow live (colors render in the terminal)
+sed $'s/\\x1b\\[[0-9;]*m//g' camera/server.log   # strip color for grep/agents
+```
+
+Other agents/tools can just read `camera/server.log` directly.
 
 ## Using it
 

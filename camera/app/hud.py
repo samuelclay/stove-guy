@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 # panel geometry (for a 1920x1080 frame)
-PANEL_W, PANEL_H = 660, 430
+PANEL_W, PANEL_H = 660, 548
 MARGIN = 36
 PAD = 26
 # Consumers like Photo Booth / Zoom show a narrower view of the 16:9 camera and
@@ -99,12 +99,15 @@ def render(snap: dict, frame_w: int = 1920, frame_h: int = 1080, mirror: bool = 
     cold, burn = snap.get("cold"), snap.get("burn")
     hist = snap.get("history") or [temp]
 
+    vals = list(hist) + [temp] + [v for v in (cold, burn) if v is not None]
     lo = snap.get("tmin")
+    if lo is None:
+        lo = min(vals) - 15
     hi = snap.get("tmax")
-    if lo is None or hi is None:
-        vals = list(hist) + [temp] + [v for v in (cold, burn) if v is not None]
-        lo = min(vals) - 15 if lo is None else lo
-        hi = max(vals) + 15 if hi is None else hi
+    if hi is None:
+        hi = max(vals) + 15
+    elif max(vals) > hi:
+        hi = max(vals) + 15          # configured top is the default; expand if exceeded
     if hi - lo < 1:
         hi = lo + 1
 
@@ -145,10 +148,34 @@ def render(snap: dict, frame_w: int = 1920, frame_h: int = 1080, mirror: bool = 
     d.text((sx + sw + 6, sy - 8), f"{round(hi)}°", font=_font(15), fill=COL_MUTED)
     d.text((sx + sw + 6, sy + sh - 16), f"{round(lo)}°", font=_font(15), fill=COL_MUTED)
 
+    # --- stove-setting dial (fixed burner setting) --------------------------
+    stove = snap.get("stove")
+    if stove is not None:
+        gy = sy + sh + 22
+        d.line([PAD, gy, PANEL_W - PAD, gy], fill=COL_BORDER, width=1)
+        d.text((PAD, gy + 12), "S T O V E   S E T T I N G", font=_font(18), fill=COL_MUTED)
+        smin = snap.get("stoveMin", 150.0)
+        smax = snap.get("stoveMax", 550.0)
+        frac = 0.0 if smax <= smin else max(0.0, min(1.0, (stove - smin) / (smax - smin)))
+        level = ("LOW", "MEDIUM-LOW", "MEDIUM", "MEDIUM-HIGH", "HIGH")[min(4, int(frac * 5))]
+        d.text((PAD - 2, gy + 32), level, font=_font(44), fill=COL_ACCENT + (255,))
+
+        # segmented bar
+        by0, bh = gy + 92, 26
+        n_seg, gap = 24, 4
+        seg_w = (sw - (n_seg - 1) * gap) / n_seg
+        filled = round(frac * n_seg)
+        for i in range(n_seg):
+            x0 = sx + i * (seg_w + gap)
+            col = COL_ACCENT + (255,) if i < filled else (255, 255, 255, 30)
+            d.rounded_rectangle([x0, by0, x0 + seg_w, by0 + bh], radius=3, fill=col)
+        d.text((sx, by0 + bh + 6), "LOW", font=_font(14), fill=COL_MUTED)
+        hb = d.textbbox((0, 0), "HIGH", font=_font(14))
+        d.text((sx + sw - (hb[2] - hb[0]), by0 + bh + 6), "HIGH", font=_font(14), fill=COL_MUTED)
+
     rgba = np.asarray(img, dtype=np.uint8)
-    # right edge of the crop-safe centre band (full height kept, sides cropped)
-    safe_right = (frame_w + frame_h * SAFE_ASPECT) / 2.0
-    x = int(max(MARGIN, min(frame_w - PANEL_W - MARGIN, safe_right - PANEL_W - MARGIN)))
+    # flush to the top-right corner (the Daily room shows the full frame, no crop)
+    x = frame_w - PANEL_W - MARGIN
     y = MARGIN
     if mirror:
         rgba = np.ascontiguousarray(rgba[:, ::-1])

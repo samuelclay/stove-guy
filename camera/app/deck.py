@@ -59,6 +59,7 @@ class Slide(BaseModel):
     transition: Optional[Transition] = None
     temperature: Optional[float] = None          # IR-thermometer target temp for this frame
     dip: Optional[float] = None                  # deg the reading drops on entry, then recovers
+    cue: Optional[str] = None                    # coaching line handed to the Tavus persona at a manual gate
 
 
 class Defaults(BaseModel):
@@ -77,6 +78,9 @@ class Thermal(BaseModel):
     burnLabel: str = "Burning above this"
     minTemp: Optional[float] = None               # sparkline y-axis range (auto if None)
     maxTemp: Optional[float] = None
+    stoveTemp: Optional[float] = None             # the burner setting (fixed, set once) shown on the HUD dial
+    stoveMin: float = 150.0                       # dial low end ("LOW")
+    stoveMax: float = 550.0                       # dial high end ("HIGH")
 
 
 class Deck(BaseModel):

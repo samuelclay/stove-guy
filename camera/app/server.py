@@ -15,6 +15,8 @@ from pydantic import BaseModel
 
 from . import config
 from . import deck as deck_mod
+from . import tavus_bridge
+from . import traffic_log
 from .camera_engine import engine
 from .deck import Deck
 from .presentation import Presentation
@@ -68,6 +70,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Stove Guy Virtual Camera", lifespan=lifespan)
+
+if traffic_log.enabled():
+    app.add_middleware(traffic_log.TrafficLogMiddleware)
 
 
 # --------------------------------------------------------------------------- #
@@ -254,6 +259,169 @@ async def api_present_action(action: str, body: Optional[JumpReq] = None):
 @app.get("/api/present/state")
 def api_present_state():
     return full_state()
+
+
+# --------------------------------------------------------------------------- #
+# Tavus persona bridge
+#
+# Inverted (push) flow: the operator drives the deck on this server; the persona
+# REACTS. On each manual gate or burning frame the presentation fires
+# on_narrate, and we push a "stovetop update" into the live conversation over
+# the Daily data channel (conversation.respond) so the persona notices and
+# coaches in its own words. Connect the room once via /api/tavus/connect.
+#
+# (/api/tavus/advance is kept for the older persona-pulls-the-deck flow.)
+# --------------------------------------------------------------------------- #
+STOVE_DECK_ID = "omelette"
+
+bridge = tavus_bridge.ConversationBridge()
+
+
+# Real flames only at the very top. The deck labels the actual fire frames
+# ("Small fire" 735°F → "Stove on fire" 875°F); everything from the burn point
+# up to here is charring/burning, NOT fire.
+FIRE_F = 730.0
+START_LINE = "Let's get cooking!"
+_prev_status: Optional[str] = None
+
+
+def _narration_text(ev: dict) -> str:
+    label = ev.get("label") or "the pan"
+    temp = ev.get("temp")          # CURRENT interpolated reading (matches the HUD)
+    target = ev.get("target")      # stage target — used ONLY to classify burn/fire
+    tpart = f", about {temp}°F" if temp is not None else ""
+    lname = label.lower()
+    is_fire = ("fire" in lname) or ("engulf" in lname) or (target is not None and target >= FIRE_F)
+    if is_fire:
+        return f"[Stovetop camera] {label}{tpart} — there are real FLAMES in the pan, it's on FIRE!"
+    if ev.get("is_burning"):
+        return f"[Stovetop camera] {label}{tpart} — it's past the burn point and charring; get it off the heat."
+    if ev.get("is_gate") and ev.get("cue"):
+        # action step → hand the persona the full instruction
+        return f"[Stovetop camera] {label}{tpart}. It's time: {ev['cue']}"
+    # routine frame → terse
+    return f"[Stovetop camera] {label}{tpart}."
+
+
+def _on_narrate(ev: dict) -> None:
+    """The first move out of standby gets the fixed opener. After that, routine
+    frames get a terse update (persona reacts briefly), action steps get a full
+    instruction, and standby frames are silent context only."""
+    global _prev_status
+    status = ev.get("status")
+    started = status == "playing" and _prev_status != "playing"
+    _prev_status = status
+    if started:
+        sent = bridge.echo(START_LINE)
+        print(f"[narrate:start] sent={sent} :: {START_LINE}", flush=True)
+        return
+    text = _narration_text(ev)
+    if status == "playing":
+        sent = bridge.respond(text)
+        mode = "respond"
+    else:
+        sent = bridge.append_context(text)
+        mode = "context"
+    print(f"[narrate:{mode}] sent={sent} :: {text}", flush=True)
+
+
+presentation.on_narrate = _on_narrate
+# Hold timer-driven advance while the persona is still speaking (no-op when the
+# bridge isn't connected — replica_speaking() is then always False).
+presentation.speaking_gate = bridge.replica_speaking
+
+
+class AdvanceReq(BaseModel):
+    reason: Optional[str] = None   # free-text the persona fills in; logged, not required
+
+
+def _ensure_stove_deck() -> None:
+    if presentation.deck is None:
+        try:
+            presentation.load(deck_mod.get_deck(STOVE_DECK_ID))
+        except FileNotFoundError:
+            raise HTTPException(404, f"deck '{STOVE_DECK_ID}' not found")
+
+
+def _coach_line(info: dict) -> str:
+    if info.get("finished"):
+        return "The omelette's done — take it off the heat and plate it up."
+    gate = info.get("next_gate")
+    if not gate or not gate.get("cue"):
+        return "Looking good — keep an eye on it."
+    cue = gate["cue"]
+    if info.get("awaiting_user"):
+        return cue                                   # we're holding here now: act now
+    eta = gate.get("eta_seconds") or 0
+    if eta >= 3:
+        return f"In about {round(eta)} seconds: {cue}"
+    return cue
+
+
+@app.post("/api/tavus/advance")
+async def api_tavus_advance(req: AdvanceReq | None = None):
+    """Persona tool target. Releases the current manual step (or starts the cook
+    on the first call) and returns the next step to coach. Safe to call when not
+    at a gate — it just reports state without skipping ahead."""
+    _ensure_stove_deck()
+    result = presentation.advance()
+    result["coach"] = _coach_line(result)
+    result["reason_received"] = req.reason if req else None
+    await broadcast()
+    return result
+
+
+@app.get("/api/tavus/state")
+def api_tavus_state():
+    """Read-only view of the same payload — handy for debugging the tunnel."""
+    _ensure_stove_deck()
+    info = presentation.gate_info()
+    info["coach"] = _coach_line(info)
+    return info
+
+
+@app.post("/api/tavus/reset")
+async def api_tavus_reset():
+    """Reload the stove deck and park on the start step (standby)."""
+    presentation.load(deck_mod.get_deck(STOVE_DECK_ID))
+    await broadcast()
+    info = presentation.gate_info()
+    info["coach"] = _coach_line(info)
+    return info
+
+
+# ----- push flow: server -> conversation (Daily data channel) -------------- #
+class ConnectReq(BaseModel):
+    conversationUrl: str
+    conversationId: str
+
+
+@app.post("/api/tavus/connect")
+def api_tavus_connect(req: ConnectReq):
+    """Join the conversation's Daily room so the server can push stovetop
+    updates into it. Call once after creating a conversation."""
+    try:
+        return bridge.connect(req.conversationUrl, req.conversationId)
+    except RuntimeError as exc:
+        raise HTTPException(500, str(exc))
+
+
+@app.post("/api/tavus/disconnect")
+def api_tavus_disconnect():
+    bridge.disconnect()
+    return bridge.status()
+
+
+@app.get("/api/tavus/bridge")
+def api_tavus_bridge():
+    return bridge.status()
+
+
+@app.post("/api/tavus/say")
+def api_tavus_say(req: AdvanceReq | None = None):
+    """Manually push a respond into the conversation (debugging the bridge)."""
+    text = (req.reason if req else None) or "[Stovetop camera] test update from the stove server."
+    return {"sent": bridge.respond(text), "text": text}
 
 
 # --------------------------------------------------------------------------- #

@@ -7,6 +7,7 @@ the last image. All visual changes are pushed to the camera engine.
 from __future__ import annotations
 
 import threading
+from typing import Callable, Optional
 
 from . import deck as deck_mod
 from . import frames
@@ -34,6 +35,12 @@ class Presentation:
         self.mirror_hud = False
         self.temp = TemperatureModel()
         self._lock = threading.Lock()
+        # Fired on every live slide change; the server pushes a stovetop update
+        # into the Tavus conversation. Receives an event dict.
+        self.on_narrate: Optional[Callable[[dict], None]] = None
+        # Optional predicate: return True to HOLD auto-advance (e.g. the persona
+        # is still speaking). Only gates timer-driven advance, never manual.
+        self.speaking_gate: Optional[Callable[[], bool]] = None
 
     # ---------------------------------------------------------------- helpers
     @property
@@ -63,6 +70,43 @@ class Presentation:
         fade = self._fade_ms(slide) if use_transition else 0
         self.engine.set_target(self._frame_for(slide), fade)
         self._begin_temp_segment()
+        self._emit_frame()
+
+    def _emit_frame(self) -> None:
+        """Emit a frame event on EVERY slide change. The server pushes a silent
+        context update for awareness, and forces the persona to speak on the
+        frames that warrant it (manual gates + burning). Flags + status let the
+        server decide; the presentation stays transport-agnostic."""
+        if self.on_narrate is None:
+            return
+        slide = self.current
+        if slide is None:
+            return
+        burn = self.deck.thermal.burnThreshold if (self.deck and self.deck.thermal) else None
+        target = slide.temperature
+        is_burning = burn is not None and target is not None and target >= burn
+        # Report the CURRENT interpolated reading (what the HUD shows), not the
+        # target the pan is ramping toward. Target is kept only for classifying
+        # burning/fire so warnings fire on the right frame even as the reading lags.
+        if self.temp.enabled and self.temp.display is not None:
+            current = round(self.temp.display)
+        else:
+            current = round(target) if target is not None else None
+        event = {
+            "label": slide.label,
+            "temp": current,
+            "target": target,
+            "mode": slide.mode,
+            "is_gate": slide.mode == "manual",
+            "is_burning": is_burning,
+            "status": self.status,
+            "index": self.index,
+            "cue": slide.cue,
+        }
+        try:
+            self.on_narrate(event)
+        except Exception:
+            pass
 
     def _begin_temp_segment(self) -> None:
         slide = self.current
@@ -216,6 +260,76 @@ class Presentation:
                     self.temp.begin_segment(slide.temperature, self.remaining, slide.dip)
             return True
 
+    # --------------------------------------------------- Tavus persona bridge
+    def _is_gate(self) -> bool:
+        """True when the deck is parked on a manual step waiting to be released:
+        STANDBY (the first/start slide) or PLAYING on a manual slide."""
+        slide = self.current
+        if slide is None:
+            return False
+        if self.status == STANDBY:
+            return True
+        return self.status == PLAYING and slide.mode == "manual"
+
+    def advance(self) -> dict:
+        """Release the current manual gate and let auto slides chain to the next
+        one. A no-op if we're mid auto-segment (so an early/extra tool call can't
+        skip a step) or already ended. Returns what happened + the gate lookahead.
+        """
+        gated = self._is_gate()
+        ended = self.status == ENDED
+        if gated:
+            self.next()   # next() takes the lock itself
+        result = self.gate_info()
+        result["advanced"] = gated
+        if not gated:
+            result["skipped_reason"] = "ended" if ended else "mid_segment"
+        return result
+
+    def gate_info(self) -> dict:
+        """Where we are plus the next manual step the deck will hold at: its label,
+        coaching cue, and an ETA (seconds of auto-play between here and there).
+        Built for the persona to narrate and pace itself."""
+        with self._lock:
+            slides = self._slides
+            if not self.deck or not slides:
+                return {"status": self.status, "finished": False, "next_gate": None}
+            cur = self._slides[self.index] if 0 <= self.index < len(slides) else None
+            awaiting = self.status == PLAYING and cur is not None and cur.mode == "manual"
+            holding = cur is not None and cur.mode == "manual" and self.status in (PLAYING, STANDBY)
+
+            gate = None
+            gate_index = None
+            eta = 0.0
+            if holding:
+                gate, gate_index, eta = cur, self.index, 0.0
+            elif cur is not None:
+                # time left on the slide we're on now, then each auto slide after it
+                if cur.mode == "auto":
+                    eta += self.remaining if self.remaining is not None else self.deck.eff_duration(cur)
+                for j in range(self.index + 1, len(slides)):
+                    s = slides[j]
+                    if s.mode == "manual":
+                        gate, gate_index = s, j
+                        break
+                    eta += self.deck.eff_duration(s)
+
+            return {
+                "status": self.status,
+                "finished": self.status == ENDED,
+                "now_showing": cur.label if cur else "",
+                "now_index": self.index,
+                "awaiting_user": awaiting,
+                "pan_temp_f": round(self.temp.display) if (self.temp.enabled and self.temp.display is not None) else None,
+                "temp_zone": self.temp.zone() if self.temp.enabled else None,
+                "next_gate": None if gate is None else {
+                    "label": gate.label,
+                    "cue": gate.cue,
+                    "index": gate_index,
+                    "eta_seconds": round(eta, 1),
+                },
+            }
+
     def tick(self, dt: float) -> None:
         """Advance the countdown + temperature; called ~10x/sec by the ticker."""
         advance_now = False
@@ -232,6 +346,14 @@ class Presentation:
         if snap is not None:
             rgba, x, y = hud.render(snap, self.engine.width, self.engine.height, self.mirror_hud)
             self.engine.set_overlay(rgba, x, y)
+        # Hold the timer-driven advance while the persona is mid-sentence; the
+        # timer stays expired, so we advance on the first tick after it finishes.
+        if advance_now and self.speaking_gate is not None:
+            try:
+                if self.speaking_gate():
+                    advance_now = False
+            except Exception:
+                pass
         if advance_now:
             self.next()   # next() takes the lock itself
 
