@@ -571,7 +571,9 @@ function updatePresenter(p, tavus) {
   const replicaSpeaking = !!(tavus && tavus.replicaSpeaking);
   $("#view-presenter").classList.toggle("awaiting", !!p.awaitingManual && !replicaSpeaking);
   const labelEl = $("#showAdvanceBtn .show-advance-label");
-  if (labelEl) labelEl.textContent = p.nextActionLabel || "Next";
+  // The replica's own set_action call wins; fall back to the deck's pre-baked
+  // action label, then a plain "Next" if nothing's set.
+  if (labelEl) labelEl.textContent = (tavus && tavus.dynamicAction) || p.nextActionLabel || "Next";
   const sp = $("#showAdvanceProgress");
   if (sp) {
     if (p.awaitingManual) sp.style.width = "100%";

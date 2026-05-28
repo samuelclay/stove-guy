@@ -9,6 +9,7 @@ The whole module degrades gracefully if ``daily-python`` isn't installed.
 """
 from __future__ import annotations
 
+import json
 import threading
 
 try:
@@ -40,6 +41,22 @@ if _AVAILABLE:
                     self._bridge._replica_speaking = True
                 elif et == "conversation.replica.stopped_speaking":
                     self._bridge._replica_speaking = False
+                elif et == "conversation.tool_call":
+                    props = message.get("properties") or {}
+                    name = props.get("name")
+                    raw = props.get("arguments")
+                    args = None
+                    if isinstance(raw, dict):
+                        args = raw
+                    elif isinstance(raw, str):
+                        try:
+                            args = json.loads(raw)
+                        except Exception:
+                            args = None
+                    if name == "set_action" and isinstance(args, dict):
+                        label = args.get("label")
+                        if isinstance(label, str) and label.strip():
+                            self._bridge._dynamic_action = label.strip()[:48]
                 if any(k in et for k in ("utterance", "speaking", "tool", "error", "replica")):
                     snippet = str(message.get("properties", {}))[:240]
                     print(f"[bridge<-] {et} {snippet}", flush=True)
@@ -56,6 +73,7 @@ class ConversationBridge:
         self._joined = False
         self._inited = False
         self._replica_speaking = False
+        self._dynamic_action: str | None = None
         self._handler = _BridgeEvents(self) if _AVAILABLE else None
 
     def replica_speaking(self) -> bool:
@@ -63,6 +81,16 @@ class ConversationBridge:
         stopped_speaking). Used to hold auto-advance so the deck doesn't race
         ahead of the replica."""
         return bool(self._replica_speaking)
+
+    def dynamic_action(self) -> str | None:
+        """The last action label the persona pushed via the set_action tool —
+        i.e. what it just told the user to do. The presentation UI uses this as
+        the show-mode button label, so the button reflects what the replica
+        actually suggested rather than a deck-baked label."""
+        return self._dynamic_action
+
+    def clear_dynamic_action(self) -> None:
+        self._dynamic_action = None
 
     def status(self) -> dict:
         with self._lock:
@@ -89,6 +117,7 @@ class ConversationBridge:
             self._client = None
             self._joined = False
             self._replica_speaking = False
+            self._dynamic_action = None
 
             client = CallClient(event_handler=self._handler) if self._handler else CallClient()
             try:
@@ -116,6 +145,7 @@ class ConversationBridge:
             self._client = None
             self._joined = False
             self._replica_speaking = False
+            self._dynamic_action = None
             self._conversation_id = None
             self._url = None
 

@@ -33,7 +33,10 @@ def full_state() -> dict:
     return {
         "presentation": presentation.state(),
         "camera": engine.status(),
-        "tavus": {"replicaSpeaking": bridge.replica_speaking()},
+        "tavus": {
+            "replicaSpeaking": bridge.replica_speaking(),
+            "dynamicAction": bridge.dynamic_action(),
+        },
     }
 
 
@@ -330,6 +333,10 @@ def _on_narrate(ev: dict) -> None:
     status = ev.get("status")
     started = status == "playing" and _prev_status != "playing"
     _prev_status = status
+    # Clear the persona-supplied button label on every frame change so stale
+    # labels from the prior gate don't bleed across; the persona's next
+    # set_action tool call (within ~1-2s) replaces it on the new gate.
+    bridge.clear_dynamic_action()
 
     if started:
         sent = bridge.echo(START_LINE)
