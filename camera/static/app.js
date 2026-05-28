@@ -419,17 +419,16 @@ $("#pathInput").onkeydown = (e) => { if (e.key === "Enter") $("#pathBtn").click(
 let presentDeck = null;     // deck with slides, for filmstrip
 let lastIndex = -1;
 
-// show-mode "advance button reveal" state: hold the button hidden until BOTH
-//   (a) the replica is not speaking, AND
-//   (b) at least GATE_MIN_HOLD_MS have passed since we arrived at this gate
-// — whichever happens LATER. The min-hold absorbs any carry-over utterance
-// that bleeds into the new frame; the speaking check keeps the button hidden
-// while the replica is mid-sentence at the gate.
-const GATE_MIN_HOLD_MS = 1500;
+// show-mode "advance button reveal" state: don't show the action button until
+// we've actually heard the replica speak AT this gate AND they've stopped. A
+// long fallback timer flips the gate to "heard" if the replica never speaks
+// at all (so the operator isn't stranded). Network/Tavus latency between gate
+// arrival and the first audio frame can be a couple of seconds — a fixed
+// time-based hold doesn't cover that, so we wait for the actual speaking flag.
+const GATE_FALLBACK_MS = 8000;
 let _gateIndex = -1;
-let _gateEntryAt = 0;
-let _gateHoldElapsed = false;
-let _gateHoldTimer = null;
+let _gateHeardSpeech = false;      // replica was observed speaking at this gate
+let _gateFallbackTimer = null;
 
 async function openPresenter(deckId, startIndex = 0) {
   presentDeck = await api("GET", deckPath(deckId));
@@ -581,36 +580,40 @@ function updatePresenter(p, tavus) {
   $("#manualOverlay").classList.toggle("hidden", !p.awaitingManual);
 
   // show-mode button: label = upcoming manual action. Reveal it only after
-  // both (a) the replica has stopped speaking AND (b) a min-hold window has
-  // elapsed since we arrived at this gate — whichever lands later. The window
-  // absorbs any tail-end utterance from the previous frame; the speaking check
-  // keeps the button hidden mid-sentence.
+  // we've heard the replica actually speak at this gate AND they've stopped —
+  // a fixed-time hold doesn't work because Tavus latency between gate arrival
+  // and the first audio frame is variable. If the replica never speaks, a
+  // long fallback timer flips the gate to "heard" so the operator can still
+  // advance manually.
   const replicaSpeaking = !!(tavus && tavus.replicaSpeaking);
   if (p.awaitingManual) {
     if (p.index !== _gateIndex) {
+      // First time we see this gate. If the replica is mid-utterance right
+      // now (carry-over from the previous frame), that counts as "heard" —
+      // when they stop, the button will reveal.
       _gateIndex = p.index;
-      _gateEntryAt = Date.now();
-      _gateHoldElapsed = false;
-      clearTimeout(_gateHoldTimer);
-      _gateHoldTimer = setTimeout(() => {
-        _gateHoldElapsed = true;
-        // The WS push that toggled replicaSpeaking off may have already landed
-        // before this timer fires, so re-evaluate the reveal condition now.
+      _gateHeardSpeech = replicaSpeaking;
+      clearTimeout(_gateFallbackTimer);
+      _gateFallbackTimer = setTimeout(() => {
+        _gateHeardSpeech = true;
         if (lastState && view === "presenter") {
           updatePresenter(lastState.presentation, lastState.tavus);
         }
-      }, GATE_MIN_HOLD_MS);
+      }, GATE_FALLBACK_MS);
+    } else if (replicaSpeaking) {
+      _gateHeardSpeech = true;
+      clearTimeout(_gateFallbackTimer);
+      _gateFallbackTimer = null;
     }
   } else if (_gateIndex !== -1) {
     _gateIndex = -1;
-    _gateEntryAt = 0;
-    _gateHoldElapsed = false;
-    clearTimeout(_gateHoldTimer);
-    _gateHoldTimer = null;
+    _gateHeardSpeech = false;
+    clearTimeout(_gateFallbackTimer);
+    _gateFallbackTimer = null;
   }
   $("#view-presenter").classList.toggle(
     "awaiting",
-    !!p.awaitingManual && _gateHoldElapsed && !replicaSpeaking,
+    !!p.awaitingManual && _gateHeardSpeech && !replicaSpeaking,
   );
   const labelEl = $("#showAdvanceBtn .show-advance-label");
   // The replica's own set_action call wins; fall back to the deck's pre-baked
