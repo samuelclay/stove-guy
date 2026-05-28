@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "french-toast",
-  "name": "French Toast — Lost the Plot",
+  "name": "French Toast — Director's Cut",
   "output": {"width": 1920, "height": 1080, "fps": 30},
   "background": "#000000",
   "mirror": true,
