@@ -303,25 +303,58 @@ def _narration_text(ev: dict) -> str:
     return f"[Stovetop camera] {label}{tpart}."
 
 
+_prev_tier: Optional[str] = None
+_silent_since_speak = 0
+CADENCE_N = 3   # speak at least once every Nth non-manual frame
+
+
 def _on_narrate(ev: dict) -> None:
-    """The first move out of standby gets the fixed opener. After that, routine
-    frames get a terse update (persona reacts briefly), action steps get a full
-    instruction, and standby frames are silent context only."""
-    global _prev_status
+    """Speak at meaningful moments — action gates, the first frame that enters
+    the burning or fire tier, and on a cadence (every Nth non-manual frame) so
+    the persona stays alive without repeating on every single frame. Everything
+    else is silent context."""
+    global _prev_status, _prev_tier, _silent_since_speak
     status = ev.get("status")
     started = status == "playing" and _prev_status != "playing"
     _prev_status = status
+
     if started:
         sent = bridge.echo(START_LINE)
+        _prev_tier = None
+        _silent_since_speak = 0
         print(f"[narrate:start] sent={sent} :: {START_LINE}", flush=True)
         return
+
     text = _narration_text(ev)
-    if status == "playing":
+    if status != "playing":
+        sent = bridge.append_context(text)
+        _prev_tier = None
+        _silent_since_speak = 0
+        print(f"[narrate:context] sent={sent} :: {text}", flush=True)
+        return
+
+    label = (ev.get("label") or "").lower()
+    target = ev.get("target")
+    is_fire = ("fire" in label) or ("engulf" in label) or (target is not None and target >= FIRE_F)
+    is_burn = bool(ev.get("is_burning")) and not is_fire
+    is_gate = bool(ev.get("is_gate"))
+    tier = "fire" if is_fire else ("burning" if is_burn else ("gate" if is_gate else "normal"))
+
+    tier_entry = (is_fire and _prev_tier != "fire") or (is_burn and _prev_tier != "burning")
+    if is_gate or tier_entry:
+        speak = True
+    else:
+        _silent_since_speak += 1
+        speak = _silent_since_speak >= CADENCE_N
+
+    if speak:
         sent = bridge.respond(text)
         mode = "respond"
+        _silent_since_speak = 0
     else:
         sent = bridge.append_context(text)
         mode = "context"
+    _prev_tier = tier
     print(f"[narrate:{mode}] sent={sent} :: {text}", flush=True)
 
 
