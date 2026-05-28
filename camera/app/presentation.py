@@ -361,7 +361,10 @@ class Presentation:
     def state(self) -> dict:
         with self._lock:
             slide = self.current
-            awaiting = self.status == PLAYING and slide is not None and slide.mode == "manual"
+            # Standby on a manual slide is just as much a "waiting on the user"
+            # state as PLAYING on one — the deck is parked at a gate. So the
+            # show-mode button appears at the very first frame.
+            awaiting = slide is not None and slide.mode == "manual" and self.status in (PLAYING, STANDBY)
             duration = (
                 self.deck.eff_duration(slide)
                 if (self.deck and slide is not None and slide.mode == "auto")
