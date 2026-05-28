@@ -1,27 +1,27 @@
 {
   "version": 1,
   "id": "french-toast",
-  "name": "French Toast — Director's Cut",
+  "name": "French Toast \u2014 Director's Cut",
   "output": {
     "width": 1920,
     "height": 1080,
     "fps": 30
   },
   "background": "#000000",
-  "mirror": false,
-  "mirrorHud": false,
+  "mirror": true,
+  "mirrorHud": true,
   "thermal": {
     "enabled": true,
     "unit": "F",
-    "coldThreshold": 250,
-    "burnThreshold": 350,
-    "coldLabel": "Too cold — the bread'll get soggy",
+    "coldThreshold": 250.0,
+    "burnThreshold": 350.0,
+    "coldLabel": "Too cold \u2014 the bread'll get soggy",
     "burnLabel": "Sugar starts to char above this",
-    "minTemp": 60,
-    "maxTemp": 500,
-    "stoveTemp": 430,
-    "stoveMin": 150,
-    "stoveMax": 550
+    "minTemp": 60.0,
+    "maxTemp": 500.0,
+    "stoveTemp": 430.0,
+    "stoveMin": 150.0,
+    "stoveMax": 550.0
   },
   "defaults": {
     "durationSec": 4.0,
@@ -40,7 +40,7 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 70,
+      "temperature": 70.0,
       "dip": null,
       "cue": null,
       "action": "Start"
@@ -53,8 +53,8 @@
       "durationSec": 5.0,
       "fit": null,
       "transition": null,
-      "temperature": 220,
-      "dip": 30,
+      "temperature": 220.0,
+      "dip": 30.0,
       "cue": null,
       "action": null
     },
@@ -66,7 +66,7 @@
       "durationSec": 5.0,
       "fit": null,
       "transition": null,
-      "temperature": 260,
+      "temperature": 260.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -79,9 +79,9 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 290,
+      "temperature": 290.0,
       "dip": null,
-      "cue": "Butter's foaming — slide in your first slice.",
+      "cue": "Butter's foaming \u2014 slide in your first slice.",
       "action": "Drop 1st slice"
     },
     {
@@ -92,8 +92,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 260,
-      "dip": 30,
+      "temperature": 260.0,
+      "dip": 30.0,
       "cue": null,
       "action": null
     },
@@ -105,7 +105,7 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 280,
+      "temperature": 280.0,
       "dip": null,
       "cue": "Slice one's in. Drop the next.",
       "action": "Drop 2nd slice"
@@ -118,8 +118,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 265,
-      "dip": 20,
+      "temperature": 265.0,
+      "dip": 20.0,
       "cue": null,
       "action": null
     },
@@ -131,7 +131,7 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 280,
+      "temperature": 280.0,
       "dip": null,
       "cue": "Third one.",
       "action": "Drop 3rd slice"
@@ -144,8 +144,8 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 270,
-      "dip": 20,
+      "temperature": 270.0,
+      "dip": 20.0,
       "cue": null,
       "action": null
     },
@@ -157,7 +157,7 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 280,
+      "temperature": 280.0,
       "dip": null,
       "cue": "Fill the pan.",
       "action": "Drop 4th slice"
@@ -170,8 +170,8 @@
       "durationSec": 5.0,
       "fit": null,
       "transition": null,
-      "temperature": 275,
-      "dip": 15,
+      "temperature": 275.0,
+      "dip": 15.0,
       "cue": null,
       "action": null
     },
@@ -183,7 +183,7 @@
       "durationSec": 5.0,
       "fit": null,
       "transition": null,
-      "temperature": 290,
+      "temperature": 290.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -196,9 +196,9 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
-      "cue": "Edges are gold — flip the first one.",
+      "cue": "Edges are gold \u2014 flip the first one.",
       "action": "Flip 1st slice"
     },
     {
@@ -209,7 +209,7 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -222,7 +222,7 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
       "cue": "Flip number two.",
       "action": "Flip 2nd slice"
@@ -235,7 +235,7 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -248,7 +248,7 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
       "cue": "Three.",
       "action": "Flip 3rd slice"
@@ -261,7 +261,7 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -274,7 +274,7 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
       "cue": "And the last.",
       "action": "Flip 4th slice"
@@ -287,7 +287,7 @@
       "durationSec": 5.0,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -300,9 +300,9 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 300,
+      "temperature": 300.0,
       "dip": null,
-      "cue": "It's perfect. Now — ruin it.",
+      "cue": "It's perfect. Now \u2014 ruin it.",
       "action": "Ruin it"
     },
     {
@@ -313,7 +313,7 @@
       "durationSec": 3.0,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -326,7 +326,7 @@
       "durationSec": 3.0,
       "fit": null,
       "transition": null,
-      "temperature": 290,
+      "temperature": 290.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -339,8 +339,8 @@
       "durationSec": 3.0,
       "fit": null,
       "transition": null,
-      "temperature": 280,
-      "dip": 20,
+      "temperature": 280.0,
+      "dip": 20.0,
       "cue": null,
       "action": null
     },
@@ -352,7 +352,7 @@
       "durationSec": 3.0,
       "fit": null,
       "transition": null,
-      "temperature": 285,
+      "temperature": 285.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -365,7 +365,7 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 295,
+      "temperature": 295.0,
       "dip": null,
       "cue": "It's stopped being breakfast. Plant the sparkler.",
       "action": "Plant sparkler"
@@ -378,7 +378,7 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 310,
+      "temperature": 310.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -391,7 +391,7 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 380,
+      "temperature": 380.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -404,7 +404,7 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 520,
+      "temperature": 520.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -417,7 +417,7 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 740,
+      "temperature": 740.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -430,7 +430,7 @@
       "durationSec": 4.0,
       "fit": null,
       "transition": null,
-      "temperature": 820,
+      "temperature": 820.0,
       "dip": null,
       "cue": null,
       "action": null
@@ -443,7 +443,7 @@
       "durationSec": null,
       "fit": null,
       "transition": null,
-      "temperature": 880,
+      "temperature": 880.0,
       "dip": null,
       "cue": "Breakfast is over. Grab the cat.",
       "action": "Call 911!"

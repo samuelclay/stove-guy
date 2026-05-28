@@ -415,6 +415,13 @@ $("#pathInput").onkeydown = (e) => { if (e.key === "Enter") $("#pathBtn").click(
 let presentDeck = null;     // deck with slides, for filmstrip
 let lastIndex = -1;
 
+// show-mode "advance button reveal" state: hold the button hidden while we're
+// still on a manual gate the replica hasn't finished speaking to.
+let _gateIndex = -1;
+let _spokeSinceGate = false;
+let _prevSpeaking = false;
+let _gateTimer = null;
+
 async function openPresenter(deckId, startIndex = 0) {
   presentDeck = await api("GET", deckPath(deckId));
   await api("POST", "/api/present/load", { deckId });
@@ -564,12 +571,35 @@ function updatePresenter(p, tavus) {
   // manual overlay on the stage
   $("#manualOverlay").classList.toggle("hidden", !p.awaitingManual);
 
-  // show-mode button: label = upcoming manual action. Only show the action
-  // button (the .awaiting class) once the replica has finished talking — so
-  // it appears the moment you actually need to act, not while he's still
-  // mid-sentence.
+  // show-mode button: label = upcoming manual action. The button must NOT
+  // appear during the gap between arriving at the gate and the replica
+  // starting to talk (otherwise it flickers in, then hides while he speaks,
+  // then comes back). Gate on having seen the replica complete a speaking
+  // turn since arriving at this gate. A 6s fallback covers the case where
+  // the replica never speaks, so the operator can still advance.
   const replicaSpeaking = !!(tavus && tavus.replicaSpeaking);
-  $("#view-presenter").classList.toggle("awaiting", !!p.awaitingManual && !replicaSpeaking);
+  if (p.awaitingManual) {
+    if (p.index !== _gateIndex) {
+      _gateIndex = p.index;
+      _spokeSinceGate = false;
+      clearTimeout(_gateTimer);
+      _gateTimer = setTimeout(() => { _spokeSinceGate = true; }, 6000);
+    }
+    if (_prevSpeaking && !replicaSpeaking) {     // falling edge of speech
+      _spokeSinceGate = true;
+      clearTimeout(_gateTimer);
+    }
+  } else if (_gateIndex !== -1) {
+    _gateIndex = -1;
+    _spokeSinceGate = false;
+    clearTimeout(_gateTimer);
+    _gateTimer = null;
+  }
+  _prevSpeaking = replicaSpeaking;
+  $("#view-presenter").classList.toggle(
+    "awaiting",
+    !!p.awaitingManual && _spokeSinceGate && !replicaSpeaking,
+  );
   const labelEl = $("#showAdvanceBtn .show-advance-label");
   // The replica's own set_action call wins; fall back to the deck's pre-baked
   // action label, then a plain "Next" if nothing's set.
