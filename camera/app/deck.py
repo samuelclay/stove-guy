@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Literal, Optional
 
 from PIL import Image
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 # Register HEIC/HEIF support so iPhone / macOS Photos exports load via Pillow.
 try:
@@ -61,6 +61,15 @@ class Slide(BaseModel):
     dip: Optional[float] = None                  # deg the reading drops on entry, then recovers
     cue: Optional[str] = None                    # coaching line handed to the Tavus persona at a manual gate
     action: Optional[str] = None                 # short verb shown on the show-mode advance button (e.g. "Pour eggs", "Flip")
+
+    @model_validator(mode="after")
+    def _strip_duration_on_manual(self):
+        # A manual slide is gated on a human action, not a timer — never let a
+        # stray durationSec slip through and start an auto-advance countdown
+        # (which can also make the show-mode action button flash early).
+        if self.mode == "manual" and self.durationSec is not None:
+            self.durationSec = None
+        return self
 
 
 class Defaults(BaseModel):

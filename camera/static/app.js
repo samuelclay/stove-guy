@@ -74,10 +74,14 @@ async function restoreFromUrl() {
 // global websocket: drives camera-status pill + presenter live state
 // --------------------------------------------------------------------------
 let ws;
+// Cached last broadcast so timers (e.g. the gate min-hold) can re-render
+// without waiting for the next WS push.
+let lastState = null;
 function connectWS() {
   ws = new WebSocket(`ws://${location.host}/ws`);
   ws.onmessage = (ev) => {
     const state = JSON.parse(ev.data);
+    lastState = state;
     updateCamStatus(state.camera);
     if (view === "presenter") updatePresenter(state.presentation, state.tavus);
   };
@@ -415,15 +419,17 @@ $("#pathInput").onkeydown = (e) => { if (e.key === "Enter") $("#pathBtn").click(
 let presentDeck = null;     // deck with slides, for filmstrip
 let lastIndex = -1;
 
-// show-mode "advance button reveal" state: hold the button hidden until the
-// replica has STARTED a fresh utterance at this gate (false→true rising edge
-// after arrival) and finished it. A speech that's already in flight when we
-// arrive (carry-over from the previous frame) doesn't count.
+// show-mode "advance button reveal" state: hold the button hidden until BOTH
+//   (a) the replica is not speaking, AND
+//   (b) at least GATE_MIN_HOLD_MS have passed since we arrived at this gate
+// — whichever happens LATER. The min-hold absorbs any carry-over utterance
+// that bleeds into the new frame; the speaking check keeps the button hidden
+// while the replica is mid-sentence at the gate.
+const GATE_MIN_HOLD_MS = 1500;
 let _gateIndex = -1;
-let _gateSawRising = false;        // saw false→true while at this gate
-let _heardSpeakingAtGate = false;  // ...AND then it stopped
-let _prevSpeaking = false;
-let _gateTimer = null;
+let _gateEntryAt = 0;
+let _gateHoldElapsed = false;
+let _gateHoldTimer = null;
 
 async function openPresenter(deckId, startIndex = 0) {
   presentDeck = await api("GET", deckPath(deckId));
@@ -574,41 +580,37 @@ function updatePresenter(p, tavus) {
   // manual overlay on the stage
   $("#manualOverlay").classList.toggle("hidden", !p.awaitingManual);
 
-  // show-mode button: label = upcoming manual action. Don't reveal the button
-  // until the replica has both STARTED (false→true) and STOPPED a fresh
-  // utterance AT this gate — so a tail-end utterance from the previous frame
-  // can't trigger a momentary reveal. A 6s fallback covers the case where the
-  // replica never speaks at all, so the operator can still advance.
+  // show-mode button: label = upcoming manual action. Reveal it only after
+  // both (a) the replica has stopped speaking AND (b) a min-hold window has
+  // elapsed since we arrived at this gate — whichever lands later. The window
+  // absorbs any tail-end utterance from the previous frame; the speaking check
+  // keeps the button hidden mid-sentence.
   const replicaSpeaking = !!(tavus && tavus.replicaSpeaking);
   if (p.awaitingManual) {
     if (p.index !== _gateIndex) {
       _gateIndex = p.index;
-      _gateSawRising = false;
-      _heardSpeakingAtGate = false;
-      clearTimeout(_gateTimer);
-      _gateTimer = setTimeout(() => { _heardSpeakingAtGate = true; }, 6000);
-    } else {
-      // rising edge (a NEW utterance) while at this gate
-      if (!_prevSpeaking && replicaSpeaking) {
-        _gateSawRising = true;
-        clearTimeout(_gateTimer);
-      }
-      // falling edge AFTER we already saw a rising edge at this gate
-      if (_gateSawRising && _prevSpeaking && !replicaSpeaking) {
-        _heardSpeakingAtGate = true;
-      }
+      _gateEntryAt = Date.now();
+      _gateHoldElapsed = false;
+      clearTimeout(_gateHoldTimer);
+      _gateHoldTimer = setTimeout(() => {
+        _gateHoldElapsed = true;
+        // The WS push that toggled replicaSpeaking off may have already landed
+        // before this timer fires, so re-evaluate the reveal condition now.
+        if (lastState && view === "presenter") {
+          updatePresenter(lastState.presentation, lastState.tavus);
+        }
+      }, GATE_MIN_HOLD_MS);
     }
   } else if (_gateIndex !== -1) {
     _gateIndex = -1;
-    _gateSawRising = false;
-    _heardSpeakingAtGate = false;
-    clearTimeout(_gateTimer);
-    _gateTimer = null;
+    _gateEntryAt = 0;
+    _gateHoldElapsed = false;
+    clearTimeout(_gateHoldTimer);
+    _gateHoldTimer = null;
   }
-  _prevSpeaking = replicaSpeaking;
   $("#view-presenter").classList.toggle(
     "awaiting",
-    !!p.awaitingManual && _heardSpeakingAtGate && !replicaSpeaking,
+    !!p.awaitingManual && _gateHoldElapsed && !replicaSpeaking,
   );
   const labelEl = $("#showAdvanceBtn .show-advance-label");
   // The replica's own set_action call wins; fall back to the deck's pre-baked
