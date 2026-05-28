@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "french-toast",
-  "name": "French Toast — Brunch Hubris",
+  "name": "French Toast — Lost the Plot",
   "output": {"width": 1920, "height": 1080, "fps": 30},
   "background": "#000000",
   "mirror": true,
