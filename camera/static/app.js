@@ -415,11 +415,10 @@ $("#pathInput").onkeydown = (e) => { if (e.key === "Enter") $("#pathBtn").click(
 let presentDeck = null;     // deck with slides, for filmstrip
 let lastIndex = -1;
 
-// show-mode "advance button reveal" state: hold the button hidden while we're
-// still on a manual gate the replica hasn't finished speaking to.
+// show-mode "advance button reveal" state: hold the button hidden until the
+// replica has actually spoken (and finished) WHILE we're at this gate.
 let _gateIndex = -1;
-let _spokeSinceGate = false;
-let _prevSpeaking = false;
+let _heardSpeakingAtGate = false;
 let _gateTimer = null;
 
 async function openPresenter(deckId, startIndex = 0) {
@@ -573,32 +572,31 @@ function updatePresenter(p, tavus) {
 
   // show-mode button: label = upcoming manual action. The button must NOT
   // appear during the gap between arriving at the gate and the replica
-  // starting to talk (otherwise it flickers in, then hides while he speaks,
-  // then comes back). Gate on having seen the replica complete a speaking
-  // turn since arriving at this gate. A 6s fallback covers the case where
-  // the replica never speaks, so the operator can still advance.
+  // starting to talk. We require the replica to *actually speak* while we are
+  // at this gate (rising edge of `replicaSpeaking` since arrival) before we
+  // consider revealing it on the next stop. A 6s fallback covers the case
+  // where the replica never speaks at all, so the operator can still advance.
   const replicaSpeaking = !!(tavus && tavus.replicaSpeaking);
   if (p.awaitingManual) {
     if (p.index !== _gateIndex) {
       _gateIndex = p.index;
-      _spokeSinceGate = false;
+      _heardSpeakingAtGate = false;
       clearTimeout(_gateTimer);
-      _gateTimer = setTimeout(() => { _spokeSinceGate = true; }, 6000);
+      _gateTimer = setTimeout(() => { _heardSpeakingAtGate = true; }, 6000);
     }
-    if (_prevSpeaking && !replicaSpeaking) {     // falling edge of speech
-      _spokeSinceGate = true;
+    if (replicaSpeaking) {
+      _heardSpeakingAtGate = true;
       clearTimeout(_gateTimer);
     }
   } else if (_gateIndex !== -1) {
     _gateIndex = -1;
-    _spokeSinceGate = false;
+    _heardSpeakingAtGate = false;
     clearTimeout(_gateTimer);
     _gateTimer = null;
   }
-  _prevSpeaking = replicaSpeaking;
   $("#view-presenter").classList.toggle(
     "awaiting",
-    !!p.awaitingManual && _spokeSinceGate && !replicaSpeaking,
+    !!p.awaitingManual && _heardSpeakingAtGate && !replicaSpeaking,
   );
   const labelEl = $("#showAdvanceBtn .show-advance-label");
   // The replica's own set_action call wins; fall back to the deck's pre-baked
