@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "french-toast",
-  "name": "French Toast \u2014 Director's Cut",
+  "name": "French Toast — Director's Cut",
   "output": {
     "width": 1920,
     "height": 1080,
@@ -15,7 +15,7 @@
     "unit": "F",
     "coldThreshold": 250.0,
     "burnThreshold": 350.0,
-    "coldLabel": "Too cold \u2014 the bread'll get soggy",
+    "coldLabel": "Too cold — the bread'll get soggy",
     "burnLabel": "Sugar starts to char above this",
     "minTemp": 60.0,
     "maxTemp": 500.0,
@@ -81,7 +81,7 @@
       "transition": null,
       "temperature": 290.0,
       "dip": null,
-      "cue": "Butter's foaming \u2014 slide in your first slice.",
+      "cue": "Butter's foaming — slide in your first slice.",
       "action": "Drop 1st slice"
     },
     {
@@ -133,7 +133,7 @@
       "transition": null,
       "temperature": 295.0,
       "dip": null,
-      "cue": "Edges are gold \u2014 flip the first one.",
+      "cue": "Edges are gold — flip the first one.",
       "action": "Flip 1st slice"
     },
     {
@@ -141,7 +141,7 @@
       "image": "images/009-one-flipped.png",
       "label": "1 flipped",
       "mode": "auto",
-      "durationSec": 4.0,
+      "durationSec": 3.0,
       "fit": null,
       "transition": null,
       "temperature": 295.0,
@@ -154,7 +154,7 @@
       "image": "images/010-two-flipped.png",
       "label": "2 flipped",
       "mode": "auto",
-      "durationSec": 4.0,
+      "durationSec": 3.0,
       "fit": null,
       "transition": null,
       "temperature": 295.0,
@@ -167,7 +167,7 @@
       "image": "images/011-three-flipped.png",
       "label": "3 flipped",
       "mode": "auto",
-      "durationSec": 4.0,
+      "durationSec": 3.0,
       "fit": null,
       "transition": null,
       "temperature": 295.0,
@@ -185,8 +185,8 @@
       "transition": null,
       "temperature": 300.0,
       "dip": null,
-      "cue": "It's perfect. Now \u2014 ruin it.",
-      "action": "Ruin it"
+      "cue": "It's perfect. Now — ruin it.",
+      "action": "Add powdered sugar"
     },
     {
       "id": "french-toast-013",
@@ -199,7 +199,7 @@
       "temperature": 295.0,
       "dip": null,
       "cue": null,
-      "action": null
+      "action": "Drizzle maple syrup"
     },
     {
       "id": "french-toast-014",
@@ -212,7 +212,7 @@
       "temperature": 290.0,
       "dip": null,
       "cue": null,
-      "action": null
+      "action": "Add whipped cream"
     },
     {
       "id": "french-toast-015",
@@ -225,7 +225,7 @@
       "temperature": 280.0,
       "dip": 20.0,
       "cue": null,
-      "action": null
+      "action": "Add chocolate chips"
     },
     {
       "id": "french-toast-016",
@@ -238,7 +238,7 @@
       "temperature": 285.0,
       "dip": null,
       "cue": null,
-      "action": null
+      "action": "Add pickle chips"
     },
     {
       "id": "french-toast-017",
